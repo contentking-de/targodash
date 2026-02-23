@@ -9,11 +9,10 @@ import { jsPDF } from "jspdf";
 
 // Kategorien - gleich wie bei KVP
 const KEYWORD_CATEGORIES = [
-  "Mortgages",
-  "Accounts&Cards",
-  "Investing",
-  "Pension",
-  "Digital Banking",
+  "Konto & Karten",
+  "Kredit & Finanzierung",
+  "Sparen & Investieren",
+  "Schutz & Vorsorge",
 ] as const;
 
 interface Briefing {
@@ -83,11 +82,10 @@ const BRIEFING_TYPE_CONFIG: Record<string, { label: string; icon: string; color:
 };
 
 const TIMELINE_CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string; bar: string }> = {
-  "Mortgages": { bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-l-blue-500", text: "text-blue-700 dark:text-blue-300", bar: "bg-blue-400/80 dark:bg-blue-500/60" },
-  "Accounts&Cards": { bg: "bg-green-50 dark:bg-green-900/20", border: "border-l-green-500", text: "text-green-700 dark:text-green-300", bar: "bg-green-400/80 dark:bg-green-500/60" },
-  "Investing": { bg: "bg-purple-50 dark:bg-purple-900/20", border: "border-l-purple-500", text: "text-purple-700 dark:text-purple-300", bar: "bg-purple-400/80 dark:bg-purple-500/60" },
-  "Pension": { bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-l-orange-500", text: "text-orange-700 dark:text-orange-300", bar: "bg-orange-400/80 dark:bg-orange-500/60" },
-  "Digital Banking": { bg: "bg-cyan-50 dark:bg-cyan-900/20", border: "border-l-cyan-500", text: "text-cyan-700 dark:text-cyan-300", bar: "bg-cyan-400/80 dark:bg-cyan-500/60" },
+  "Konto & Karten": { bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-l-blue-500", text: "text-blue-700 dark:text-blue-300", bar: "bg-blue-400/80 dark:bg-blue-500/60" },
+  "Kredit & Finanzierung": { bg: "bg-green-50 dark:bg-green-900/20", border: "border-l-green-500", text: "text-green-700 dark:text-green-300", bar: "bg-green-400/80 dark:bg-green-500/60" },
+  "Sparen & Investieren": { bg: "bg-purple-50 dark:bg-purple-900/20", border: "border-l-purple-500", text: "text-purple-700 dark:text-purple-300", bar: "bg-purple-400/80 dark:bg-purple-500/60" },
+  "Schutz & Vorsorge": { bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-l-orange-500", text: "text-orange-700 dark:text-orange-300", bar: "bg-orange-400/80 dark:bg-orange-500/60" },
 };
 
 const DEFAULT_CATEGORY_COLORS = { bg: "bg-slate-50 dark:bg-slate-800/50", border: "border-l-slate-400", text: "text-slate-700 dark:text-slate-300", bar: "bg-slate-400/80 dark:bg-slate-500/60" };

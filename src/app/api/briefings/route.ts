@@ -122,7 +122,7 @@ export async function POST(request: Request) {
         requesterId: user.id,
         title: title.trim(),
         briefingType,
-        category: category || null, // Kategorie (Mortgages, Accounts&Cards, Investing, Pension, Digital Banking)
+        category: category || null, // Kategorie (Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge)
         contentAction: contentAction || briefingType, // Fallback auf briefingType wenn nicht gesetzt
         targetAudience: targetAudience?.trim() || null,
         funnelStage: funnelStage || null,

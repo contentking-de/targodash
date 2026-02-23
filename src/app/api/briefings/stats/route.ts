@@ -143,7 +143,7 @@ export async function GET() {
     };
 
     // Statistiken nach Kategorie (gleiche Kategorien wie bei KVP)
-    const CATEGORIES = ["Mortgages", "Accounts&Cards", "Investing", "Pension", "Digital Banking"];
+    const CATEGORIES = ["Konto & Karten", "Kredit & Finanzierung", "Sparen & Investieren", "Schutz & Vorsorge"];
     const byCategory: Record<string, { total: number; completed: number; inReview: number; inProgress: number; ordered: number }> = {};
     
     // Initialisiere alle Kategorien

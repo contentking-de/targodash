@@ -87,11 +87,10 @@ interface KVPUrl {
 }
 
 const KEYWORD_CATEGORIES = [
-  "Mortgages",
-  "Accounts&Cards",
-  "Investing",
-  "Pension",
-  "Digital Banking",
+  "Konto & Karten",
+  "Kredit & Finanzierung",
+  "Sparen & Investieren",
+  "Schutz & Vorsorge",
 ] as const;
 
 interface Ranking {

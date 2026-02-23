@@ -9,11 +9,10 @@ import { useProperty } from "@/contexts/PropertyContext";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 const CATEGORY_FILTERS = [
-  { label: "Mortgages", path: "/ch/de/services/mortgages-and-financing/" },
-  { label: "Accounts & Cards", path: "/ch/de/services/accounts-and-cards/" },
-  { label: "Pension", path: "/ch/de/services/pension/" },
-  { label: "Investing", path: "/ch/de/services/investments/" },
-  { label: "Digital Banking", path: "/ch/de/services/digital-banking/" },
+  { label: "Konto & Karten", path: "/ch/de/services/accounts-and-cards/" },
+  { label: "Kredit & Finanzierung", path: "/ch/de/services/mortgages-and-financing/" },
+  { label: "Sparen & Investieren", path: "/ch/de/services/investments/" },
+  { label: "Schutz & Vorsorge", path: "/ch/de/services/pension/" },
 ] as const;
 
 interface TrendPoint {

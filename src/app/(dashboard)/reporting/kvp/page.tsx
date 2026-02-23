@@ -6,11 +6,10 @@ import { StatCard } from "@/components/ui/StatCard";
 import { BarChart, PieChart } from "@/components/charts";
 
 const KEYWORD_CATEGORIES = [
-  "Mortgages",
-  "Accounts&Cards",
-  "Investing",
-  "Pension",
-  "Digital Banking",
+  "Konto & Karten",
+  "Kredit & Finanzierung",
+  "Sparen & Investieren",
+  "Schutz & Vorsorge",
 ] as const;
 
 // Zeitraum-Presets

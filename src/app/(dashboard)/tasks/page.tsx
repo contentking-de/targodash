@@ -94,20 +94,18 @@ const PRIORITIES = [
 ];
 
 const CATEGORIES = [
-  "Mortgages",
-  "Accounts&Cards", 
-  "Investing",
-  "Pension",
-  "Digital Banking",
+  "Konto & Karten",
+  "Kredit & Finanzierung",
+  "Sparen & Investieren",
+  "Schutz & Vorsorge",
 ];
 
 // Kategorie-Farben für Timeline
 const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  "Mortgages": { bg: "bg-blue-100 dark:bg-blue-900/30", border: "border-blue-500", text: "text-blue-700 dark:text-blue-300" },
-  "Accounts&Cards": { bg: "bg-green-100 dark:bg-green-900/30", border: "border-green-500", text: "text-green-700 dark:text-green-300" },
-  "Investing": { bg: "bg-purple-100 dark:bg-purple-900/30", border: "border-purple-500", text: "text-purple-700 dark:text-purple-300" },
-  "Pension": { bg: "bg-orange-100 dark:bg-orange-900/30", border: "border-orange-500", text: "text-orange-700 dark:text-orange-300" },
-  "Digital Banking": { bg: "bg-cyan-100 dark:bg-cyan-900/30", border: "border-cyan-500", text: "text-cyan-700 dark:text-cyan-300" },
+  "Konto & Karten": { bg: "bg-blue-100 dark:bg-blue-900/30", border: "border-blue-500", text: "text-blue-700 dark:text-blue-300" },
+  "Kredit & Finanzierung": { bg: "bg-green-100 dark:bg-green-900/30", border: "border-green-500", text: "text-green-700 dark:text-green-300" },
+  "Sparen & Investieren": { bg: "bg-purple-100 dark:bg-purple-900/30", border: "border-purple-500", text: "text-purple-700 dark:text-purple-300" },
+  "Schutz & Vorsorge": { bg: "bg-orange-100 dark:bg-orange-900/30", border: "border-orange-500", text: "text-orange-700 dark:text-orange-300" },
 };
 
 // Hilfsfunktionen für Dateien

@@ -455,6 +455,88 @@ export async function sendTicketUpdateNotification({
   return data;
 }
 
+// ===== Editorial Plan Notifications =====
+
+export async function sendEditorialPlanStatusNotification({
+  to,
+  entryTitle,
+  oldStatus,
+  newStatus,
+  updaterName,
+  dueDate,
+  dashboardUrl,
+}: {
+  to: string;
+  entryTitle: string;
+  oldStatus: string | null;
+  newStatus: string;
+  updaterName: string;
+  dueDate: string | null;
+  dashboardUrl: string;
+}) {
+  const isNew = !oldStatus;
+  const subject = isNew
+    ? `Redaktionsplan: Neuer Eintrag zugewiesen – ${entryTitle}`
+    : `Redaktionsplan: Status geändert – ${entryTitle}`;
+
+  const statusInfo = isNew
+    ? `<p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+        Dir wurde ein neuer Eintrag im Redaktionsplan von <strong>${updaterName}</strong> zugewiesen.
+      </p>`
+    : `<p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+        <strong>${updaterName}</strong> hat den Status eines Eintrags im Redaktionsplan geändert.
+      </p>`;
+
+  const { data, error } = await resend.emails.send({
+    from: EMAIL_FROM,
+    to: to,
+    subject,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <h1 style="color: #18181b; font-size: 24px; margin: 0 0 16px 0;">Redaktionsplan</h1>
+            ${statusInfo}
+            <div style="background-color: #f4f4f5; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <p style="color: #18181b; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">${entryTitle}</p>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                ${!isNew ? `
+                  <span style="display: inline-block; padding: 4px 8px; background-color: #fee2e2; color: #991b1b; font-size: 12px; border-radius: 4px; text-decoration: line-through;">
+                    ${oldStatus}
+                  </span>
+                  <span style="display: inline-block; font-size: 12px; color: #94a3b8;">→</span>
+                ` : ""}
+                <span style="display: inline-block; padding: 4px 8px; background-color: #dcfce7; color: #166534; font-size: 12px; border-radius: 4px; font-weight: 500;">
+                  ${newStatus}
+                </span>
+                ${dueDate ? `<span style="display: inline-block; padding: 4px 8px; background-color: #e2e8f0; color: #475569; font-size: 12px; border-radius: 4px;">Fällig: ${new Date(dueDate).toLocaleDateString("de-DE")}</span>` : ""}
+              </div>
+            </div>
+            <a href="${dashboardUrl}" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+              Redaktionsplan öffnen
+            </a>
+            <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0;">
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
+            </p>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+
+  if (error) {
+    console.error("Failed to send editorial plan status notification:", error);
+    throw error;
+  }
+
+  return data;
+}
+
 export async function sendWelcomeEmail({
   to,
   invitedBy,
