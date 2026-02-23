@@ -36,7 +36,7 @@ export async function POST(
       );
     }
 
-    if (!process.env.BLOB2_READ_WRITE_TOKEN) {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return NextResponse.json(
         { error: "Vercel Blob Token nicht konfiguriert" },
         { status: 500 }
@@ -183,7 +183,7 @@ export async function PUT(
       return NextResponse.json({ error: "Nur für Agentur-Nutzer verfügbar" }, { status: 403 });
     }
 
-    if (!process.env.BLOB2_READ_WRITE_TOKEN) {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return NextResponse.json(
         { error: "Vercel Blob Token nicht konfiguriert" },
         { status: 500 }
