@@ -41,10 +41,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch the URL content
+    // Fetch the URL content (forward cookies for auth)
     const contentResponse = await fetch(`${request.nextUrl.origin}/api/seo-helper/fetch-content`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        cookie: request.headers.get("cookie") || "",
+      },
       body: JSON.stringify({ url }),
     });
 
