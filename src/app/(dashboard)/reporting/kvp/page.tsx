@@ -506,7 +506,7 @@ export default function KVPReportPage() {
                 Wähle einen anderen Zeitraum aus oder erstelle einen neuen KVP.
               </p>
               <Link
-                href="/ubs-kvp"
+                href="/kvp"
                 className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
               >
                 Zum KVP
@@ -808,7 +808,7 @@ export default function KVPReportPage() {
                       <p className="text-amber-600 dark:text-amber-400">
                         Hinweis: Es wurden noch keine Reifegrad-Verknüpfungen für die KVPs in diesem
                         Zeitraum erstellt. Diese können im{" "}
-                        <Link href="/ubs-kvp" className="underline hover:no-underline">
+                        <Link href="/kvp" className="underline hover:no-underline">
                           KVP-Bereich
                         </Link>{" "}
                         hinzugefügt werden.

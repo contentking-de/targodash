@@ -348,7 +348,7 @@ export default function DashboardPage() {
                 />
               </Link>
               
-              <Link href="/ubs-kvp" className="block hover:scale-[1.02] transition-transform">
+              <Link href="/kvp" className="block hover:scale-[1.02] transition-transform">
                 <StatCard
                   title="KVP-URLs"
                   value={dashboardStats.kvp.count}

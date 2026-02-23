@@ -119,7 +119,7 @@ function LoginContent() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="w-full max-w-md p-8 bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">SME Dashboard</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">SEO Dashboard</h1>
           <p className="text-slate-400">Melde Dich an, um fortzufahren</p>
         </div>
 

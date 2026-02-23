@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: session.user.id,
           name: "Standard Tracker",
-          location: "Switzerland",
+          location: "Germany",
           language: "German",
         },
       });

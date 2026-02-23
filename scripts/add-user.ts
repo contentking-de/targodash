@@ -46,7 +46,7 @@ const name = process.argv[3];
 if (!email) {
   console.error("❌ Bitte gib eine E-Mail-Adresse an:");
   console.error("   npm run add-user <email> [name]");
-  console.error("   Beispiel: npm run add-user sebastian.grobe@ubs.com \"Sebastian Grobe\"");
+  console.error("   Beispiel: npm run add-user max.mustermann@targobank.de \"Max Mustermann\"");
   process.exit(1);
 }
 

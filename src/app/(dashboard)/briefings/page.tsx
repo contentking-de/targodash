@@ -2270,7 +2270,7 @@ export default function BriefingsPage() {
                           value={selectedBriefing.keywordsetLongtail || ""}
                           onChange={(e) => updateBriefing(selectedBriefing.id, { keywordsetLongtail: e.target.value })}
                           rows={4}
-                          placeholder="hypothek berechnen schweiz&#10;hypothek aufnehmen voraussetzungen&#10;hypothek zinsen vergleich&#10;..."
+                          placeholder="kredit beantragen online&#10;kredit aufnehmen voraussetzungen&#10;kredit zinsen vergleich&#10;..."
                           className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm"
                         />
                       </div>

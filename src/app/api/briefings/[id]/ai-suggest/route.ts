@@ -238,7 +238,7 @@ Wichtige Regeln:
 - Antworte NUR mit dem gewünschten Inhalt, keine Erklärungen oder Einleitungen
 - Verwende das Fokus-Keyword natürlich im Text
 - Halte dich an SEO Best Practices
-- Schreibe auf Deutsch (Schweizer Hochdeutsch)`;
+- Schreibe auf Deutsch (Hochdeutsch)`;
 
   switch (briefingType) {
     case "new_content":

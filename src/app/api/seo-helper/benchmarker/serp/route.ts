@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     // SERP-Abfrage mit DataForSEO Live API - Schweiz
     const requestBody = [{
       keyword: keyword.trim(),
-      location_code: 2756, // Schweiz
+      location_code: 2276, // Deutschland
       language_code: "de",
       depth: 10, // Top 10
     }];

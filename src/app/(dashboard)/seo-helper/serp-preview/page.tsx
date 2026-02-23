@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function SERPPreviewPage() {
-  const [url, setUrl] = useState("https://www.beispiel.ch/ratgeber/hypothek");
-  const [title, setTitle] = useState("Hypothek Schweiz: Der umfassende Ratgeber 2026");
-  const [description, setDescription] = useState("Erfahren Sie alles Wichtige über Hypotheken in der Schweiz. Unser umfassender Ratgeber bietet Ihnen Expertenwissen, aktuelle Zinsen und praktische Tipps.");
+  const [url, setUrl] = useState("https://www.beispiel.de/ratgeber/kredit");
+  const [title, setTitle] = useState("Kredit vergleichen: Der umfassende Ratgeber 2026");
+  const [description, setDescription] = useState("Erfahren Sie alles Wichtige über Kredite in Deutschland. Unser umfassender Ratgeber bietet Ihnen Expertenwissen, aktuelle Zinsen und praktische Tipps.");
   const [favicon, setFavicon] = useState("");
   const [previewType, setPreviewType] = useState<"desktop" | "mobile">("desktop");
 

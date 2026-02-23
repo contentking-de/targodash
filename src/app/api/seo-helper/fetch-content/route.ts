@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch the URL through Swiss proxy with realistic browser headers
+    // Fetch the URL through proxy with realistic browser headers
     const response = await proxyFetch(url, {
       headers: DEFAULT_SCRAPE_HEADERS,
       timeoutMs: 15000, // 15 second timeout for slow sites

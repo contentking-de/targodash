@@ -32,7 +32,7 @@ export async function GET() {
         data: {
           userId: session.user.id,
           name: "Standard Tracker",
-          location: "Switzerland",
+          location: "Germany",
           language: "German",
         },
         include: {

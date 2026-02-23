@@ -20,7 +20,7 @@ const tools: Anthropic.Tool[] = [
   {
     name: "search_rankings",
     description:
-      "Ruft die aktuellen Google-Rankings für Keywords ab. Zeigt die Position in den Suchergebnissen für ubs.com. Ideal für Fragen wie 'Auf welcher Position rankt ubs.com für [keyword]?' oder 'Wie sind die Rankings für diese Keywords?'",
+      "Ruft die aktuellen Google-Rankings für Keywords ab. Zeigt die Position in den Suchergebnissen für targobank.de. Ideal für Fragen wie 'Auf welcher Position rankt targobank.de für [keyword]?' oder 'Wie sind die Rankings für diese Keywords?'",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -31,8 +31,8 @@ const tools: Anthropic.Tool[] = [
         },
         location: {
           type: "string",
-          description: "Land für die Suche (Standard: Switzerland)",
-          default: "Switzerland",
+          description: "Land für die Suche (Standard: Germany)",
+          default: "Germany",
         },
       },
       required: ["keywords"],
@@ -57,7 +57,7 @@ const tools: Anthropic.Tool[] = [
   {
     name: "analyze_backlinks",
     description:
-      "Analysiert das Backlink-Profil von ubs.com. Zeigt die stärksten Backlinks, deren Quellen und Metriken. Ideal für Fragen wie 'Welche Backlinks hat ubs.com?' oder 'Zeig mir die Top-Backlinks'.",
+      "Analysiert das Backlink-Profil von targobank.de. Zeigt die stärksten Backlinks, deren Quellen und Metriken. Ideal für Fragen wie 'Welche Backlinks hat targobank.de?' oder 'Zeig mir die Top-Backlinks'.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -78,7 +78,7 @@ const tools: Anthropic.Tool[] = [
   {
     name: "get_backlinks_summary",
     description:
-      "Ruft eine Zusammenfassung des Backlink-Profils von ubs.com ab. Zeigt Gesamtzahl der Backlinks, verweisende Domains, dofollow/nofollow-Verhältnis etc.",
+      "Ruft eine Zusammenfassung des Backlink-Profils von targobank.de ab. Zeigt Gesamtzahl der Backlinks, verweisende Domains, dofollow/nofollow-Verhältnis etc.",
     input_schema: {
       type: "object" as const,
       properties: {},
@@ -88,7 +88,7 @@ const tools: Anthropic.Tool[] = [
   {
     name: "get_referring_domains",
     description:
-      "Zeigt die verweisenden Domains für ubs.com. Listet auf, welche Websites auf ubs.com verlinken und wie stark diese sind.",
+      "Zeigt die verweisenden Domains für targobank.de. Listet auf, welche Websites auf targobank.de verlinken und wie stark diese sind.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -112,7 +112,7 @@ async function executeTool(
     switch (toolName) {
       case "search_rankings": {
         const keywords = (toolInput.keywords as string[]) || [];
-        const location = (toolInput.location as string) || "Switzerland";
+        const location = (toolInput.location as string) || "Germany";
 
         if (keywords.length === 0) {
           return JSON.stringify({ error: "Keine Keywords angegeben" });
@@ -120,14 +120,14 @@ async function executeTool(
 
         const keywordsWithTarget = keywords.map((k) => ({
           keyword: k,
-          targetUrl: "ubs.com",
+          targetUrl: "targobank.de",
         }));
 
         const results = await fetchRankings(keywordsWithTarget, location);
 
         // Finde Positionen für jedes Keyword
         const rankings = keywords.map((keyword) => {
-          const position = findRankingPosition(results, keyword, "ubs.com");
+          const position = findRankingPosition(results, keyword, "targobank.de");
           return {
             keyword,
             position: position.position,
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
     );
 
     // System prompt for the SEO Agent
-    const systemPrompt = `Du bist ein erfahrener SEO-Experte und Analyst für ubs.com. Du hilfst bei der Analyse von:
+    const systemPrompt = `Du bist ein erfahrener SEO-Experte und Analyst für targobank.de. Du hilfst bei der Analyse von:
 - Keyword-Rankings und Sichtbarkeit in Google
 - Suchvolumen und Keyword-Recherche
 - Backlink-Profil und Link-Building
@@ -292,12 +292,12 @@ REGELN FÜR TOOL-NUTZUNG:
 
 KEYWORD-ERWEITERUNG (erlaubt, aber begrenzt):
 - Du darfst die Keywords des Nutzers um MAXIMAL 3 thematisch verwandte Keywords ergänzen
-- Beispiel: Nutzer fragt nach "Hypothek" → du kannst "Hypothek", "Hypothekenzinsen", "Hypothek Schweiz", "Immobilienfinanzierung" abfragen (4 total)
+- Beispiel: Nutzer fragt nach "Kredit" → du kannst "Kredit", "Kreditzinsen", "Kredit Deutschland", "Kreditvergleich" abfragen (4 total)
 - Erweitere NUR wenn es für eine bessere Analyse sinnvoll ist
 - Bei allgemeinen Fragen ohne Keywords: Frage den Nutzer nach spezifischen Keywords statt eigene zu erfinden
 
 Wichtige Hinweise:
-- Alle Analysen beziehen sich auf ubs.com (Schweiz)
+- Alle Analysen beziehen sich auf den deutschen Markt (Deutschland)
 - Antworte auf Deutsch
 - Sei präzise und datengetrieben
 - Gib konkrete Handlungsempfehlungen

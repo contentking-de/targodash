@@ -1,4 +1,4 @@
-// Prisma Schema für SME Dashboard
+// Prisma Schema für SEO Dashboard
 // Neon PostgreSQL Datenbank
 
 generator client {
@@ -187,7 +187,7 @@ model RankTracker {
   userId    String
   user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String               @default("Standard Tracker")
-  location  String               @default("Switzerland") // Standort für Rankings
+  location  String               @default("Germany") // Standort für Rankings
   language  String               @default("German") // Sprache für Rankings
   keywords  RankTrackerKeyword[]
   createdAt DateTime             @default(now())
@@ -229,7 +229,7 @@ model RankTrackerRanking {
   @@index([date])
 }
 
-// UBS KVP (Kontinuierlicher Verbesserungsprozess) Model
+// KVP (Kontinuierlicher Verbesserungsprozess) Model
 model KVPUrl {
   id           String                @id @default(cuid())
   userId       String
@@ -278,7 +278,7 @@ model KVPMaturityItemLink {
   @@index([maturityItemId])
 }
 
-// UBS KVP Subkeywords - Beliebig viele Subkeywords pro URL
+// KVP Subkeywords - Beliebig viele Subkeywords pro URL
 model KVPSubkeyword {
   id        String   @id @default(cuid())
   urlId     String
@@ -290,7 +290,7 @@ model KVPSubkeyword {
   @@index([urlId])
 }
 
-// UBS KVP Kommentare - Beliebig viele Kommentare pro URL
+// KVP Kommentare - Beliebig viele Kommentare pro URL
 model KVPComment {
   id        String   @id @default(cuid())
   urlId     String
@@ -521,10 +521,10 @@ model ChangelogTime {
 }
 
 // Linkprofil - Gespeicherte Backlink-Daten von DataForSEO
-// Target ist immer ubs.com (hardcoded)
+// Target ist immer targobank.de (hardcoded)
 model BacklinkProfile {
   id                       String   @id @default(cuid())
-  target                   String   @default("ubs.com")
+  target                   String   @default("targobank.de")
   totalBacklinks           Int      @default(0)
   totalReferringDomains    Int      @default(0)
   totalReferringMainDomains Int     @default(0)

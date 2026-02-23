@@ -245,7 +245,7 @@ export default function BenchmarkerPage() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearchSerp()}
-            placeholder="z.B. Hypothek Schweiz, Kreditkarte vergleichen..."
+            placeholder="z.B. Kredit vergleichen, Girokonto eröffnen..."
             className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
           <button
@@ -279,7 +279,7 @@ export default function BenchmarkerPage() {
         )}
 
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Sucht die Top 10 Google-Ergebnisse für dein Keyword in der Schweiz
+          Sucht die Top 10 Google-Ergebnisse für dein Keyword in Deutschland
         </p>
       </div>
 
@@ -623,7 +623,7 @@ export default function BenchmarkerPage() {
             Content-Benchmark starten
           </h3>
           <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            Gib ein Keyword ein, um die Top 10 Google-Ergebnisse in der Schweiz zu laden. 
+            Gib ein Keyword ein, um die Top 10 Google-Ergebnisse in Deutschland zu laden. 
             Wähle dann Konkurrenten aus und vergleiche deinen Content mit deren Inhalten.
           </p>
         </div>
@@ -633,7 +633,7 @@ export default function BenchmarkerPage() {
       <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 border border-orange-200 dark:border-orange-800">
         <h3 className="font-medium text-orange-900 dark:text-orange-100 mb-2">So funktioniert der Benchmarker</h3>
         <ul className="text-sm text-orange-800 dark:text-orange-200 space-y-1">
-          <li>1. Gib ein Keyword ein und lade die Top 10 Suchergebnisse aus der Schweiz</li>
+          <li>1. Gib ein Keyword ein und lade die Top 10 Suchergebnisse aus Deutschland</li>
           <li>2. Wähle die Konkurrenten aus, mit denen du dich vergleichen möchtest</li>
           <li>3. Gib deine eigene URL ein und starte die Analyse</li>
           <li>4. Erhalte Content-Gaps und konkrete Verbesserungsvorschläge</li>

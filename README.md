@@ -1,4 +1,4 @@
-# SME Dashboard
+# SEO Dashboard
 
 Ein umfassendes SEO-Dashboard zur Visualisierung und Analyse von Google Search Console Daten mit KI-gestützten Tools.
 

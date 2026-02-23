@@ -133,7 +133,7 @@ const formatDateTime = (dateString: string): string => {
   });
 };
 
-export default function UBSKVPPage() {
+export default function KVPPage() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const canEditData = canEdit(session?.user?.role);

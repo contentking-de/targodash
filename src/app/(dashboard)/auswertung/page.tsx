@@ -51,7 +51,8 @@ export default function AuswertungPage() {
   const [selectedDirectory, setSelectedDirectory] = useState<string | null>(null);
   const [directoryDepth, setDirectoryDepth] = useState(4);
   const [viewMode, setViewMode] = useState<"directories" | "keywords">("directories");
-  const [brandFilter, setBrandFilter] = useState("ubs");
+  const [brandFilter, setBrandFilter] = useState("targobank");
+  const [directorySearch, setDirectorySearch] = useState("");
   const [excludeBrand, setExcludeBrand] = useState(true);
   const [totals, setTotals] = useState({
     clicks: 0,
@@ -428,12 +429,38 @@ export default function AuswertungPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Directory List */}
             <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-              <div className="p-4 border-b border-slate-700">
-                <h3 className="text-lg font-semibold text-white">Verzeichnisse</h3>
-                <p className="text-sm text-slate-400">Klicke auf ein Verzeichnis für Details</p>
+              <div className="p-4 border-b border-slate-700 space-y-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Verzeichnisse</h3>
+                  <p className="text-sm text-slate-400">Klicke auf ein Verzeichnis für Details</p>
+                </div>
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={directorySearch}
+                    onChange={(e) => setDirectorySearch(e.target.value)}
+                    placeholder="URL-Pfad filtern..."
+                    className="w-full pl-9 pr-8 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {directorySearch && (
+                    <button
+                      onClick={() => setDirectorySearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="max-h-[500px] overflow-y-auto">
-                {directoryStats.directories.map((dir) => (
+                {directoryStats.directories.filter((dir) =>
+                  !directorySearch || dir.path.toLowerCase().includes(directorySearch.toLowerCase())
+                ).map((dir) => (
                   <button
                     key={dir.path}
                     onClick={() => {
@@ -519,7 +546,7 @@ export default function AuswertungPage() {
                             type="text"
                             value={brandFilter}
                             onChange={(e) => setBrandFilter(e.target.value)}
-                            placeholder="z.B. ubs, bank"
+                            placeholder="z.B. targobank, targo"
                             disabled={!excludeBrand}
                             className="flex-1 px-3 py-1.5 text-sm bg-slate-600 border border-slate-500 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                           />

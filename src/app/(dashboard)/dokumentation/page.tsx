@@ -31,7 +31,7 @@ const docSections: DocSection[] = [
     content: [
       {
         title: "Anmeldung & Google-Verknüpfung",
-        body: "Nach der ersten Anmeldung im SME Dashboard musst du deinen Google Account verknüpfen, um auf die Google Search Console Daten zugreifen zu können. Klicke dazu auf den Button \"Connect with Google\" in der oberen Leiste oder gehe in die Einstellungen. Die Verknüpfung erlaubt dem Dashboard, deine GSC-Daten abzurufen und auszuwerten.",
+        body: "Nach der ersten Anmeldung im SEO Dashboard musst du deinen Google Account verknüpfen, um auf die Google Search Console Daten zugreifen zu können. Klicke dazu auf den Button \"Connect with Google\" in der oberen Leiste oder gehe in die Einstellungen. Die Verknüpfung erlaubt dem Dashboard, deine GSC-Daten abzurufen und auszuwerten.",
         link: "/settings",
         linkLabel: "Zu den Einstellungen",
       },
@@ -160,7 +160,7 @@ const docSections: DocSection[] = [
       {
         title: "Was ist der SEO KVP?",
         body: "Der SEO KVP (Kontinuierlicher Verbesserungsprozess) hilft dir, systematisch an der SEO-Optimierung deiner Website zu arbeiten. Du kannst URLs hinterlegen, die regelmäßig überprüft und optimiert werden sollen. Dabei wird der Fortschritt dokumentiert und nachverfolgt.",
-        link: "/ubs-kvp",
+        link: "/kvp",
         linkLabel: "Zum SEO KVP",
       },
       {
@@ -368,7 +368,7 @@ const docSections: DocSection[] = [
       },
       {
         title: "Changelog",
-        body: "Im Changelog findest du alle Änderungen und neuen Features, die am SME Dashboard vorgenommen wurden. So bleibst du immer auf dem neuesten Stand über Verbesserungen und neue Funktionen.",
+        body: "Im Changelog findest du alle Änderungen und neuen Features, die am SEO Dashboard vorgenommen wurden. So bleibst du immer auf dem neuesten Stand über Verbesserungen und neue Funktionen.",
         link: "/changelog",
         linkLabel: "Zum Changelog",
       },
@@ -415,7 +415,7 @@ export default function DokumentationPage() {
       <div>
         <h1 className="text-2xl font-bold text-white">Dokumentation</h1>
         <p className="mt-2 text-slate-400">
-          Willkommen in der Dokumentation des SME Dashboards. Hier findest du
+          Willkommen in der Dokumentation des SEO Dashboards. Hier findest du
           alle Informationen zu den Funktionen und Features.
         </p>
       </div>

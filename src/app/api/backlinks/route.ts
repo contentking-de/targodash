@@ -23,9 +23,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`[API GET /api/backlinks] Request: type=${type}, limit=${limit}, offset=${offset}`);
 
-    // Hole das aktuelle Profil (es gibt nur eines für ubs.com)
+    // Hole das aktuelle Profil (es gibt nur eines für targobank.de)
     const profile = await prisma.backlinkProfile.findFirst({
-      where: { target: "ubs.com" },
+      where: { target: "targobank.de" },
       orderBy: { updatedAt: "desc" },
     });
 
@@ -169,14 +169,14 @@ export async function POST(request: NextRequest) {
     // 4. Altes Profil löschen (falls vorhanden)
     console.log("[API POST /api/backlinks] Lösche alte Daten...");
     await prisma.backlinkProfile.deleteMany({
-      where: { target: "ubs.com" },
+      where: { target: "targobank.de" },
     });
 
     // 5. Neues Profil erstellen
     console.log("[API POST /api/backlinks] Erstelle neues Profil...");
     const profile = await prisma.backlinkProfile.create({
       data: {
-        target: "ubs.com",
+        target: "targobank.de",
         totalBacklinks: summary.total_backlinks,
         totalReferringDomains: summary.total_referring_domains,
         totalReferringMainDomains: summary.total_referring_main_domains,

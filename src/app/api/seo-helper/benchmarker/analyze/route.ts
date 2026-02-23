@@ -193,7 +193,7 @@ async function scrapeUrl(url: string): Promise<{
   content: string;
   headings: { level: string; text: string }[];
 }> {
-  // Fetch through Swiss proxy to avoid geo-blocking
+  // Fetch through proxy to avoid geo-blocking
   const response = await proxyFetch(url, {
     headers: DEFAULT_SCRAPE_HEADERS,
     timeoutMs: 15000,

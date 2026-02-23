@@ -1676,7 +1676,7 @@ export default function SEOMaturityPage() {
                                       {kvpLinksMap[item.id].map((link) => (
                                         <a
                                           key={link.linkId}
-                                          href={`/ubs-kvp?search=${encodeURIComponent(link.kvp.focusKeyword)}`}
+                                          href={`/kvp?search=${encodeURIComponent(link.kvp.focusKeyword)}`}
                                           className="block p-3 bg-slate-800 hover:bg-slate-750 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors group"
                                         >
                                           <div className="flex items-start justify-between gap-3">

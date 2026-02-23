@@ -53,7 +53,7 @@ export default function SchemaGeneratorPage() {
   const [businessAddress, setBusinessAddress] = useState("");
   const [businessCity, setBusinessCity] = useState("");
   const [businessPostal, setBusinessPostal] = useState("");
-  const [businessCountry, setBusinessCountry] = useState("CH");
+  const [businessCountry, setBusinessCountry] = useState("DE");
   const [businessPhone, setBusinessPhone] = useState("");
 
   // Breadcrumb State
@@ -77,7 +77,7 @@ export default function SchemaGeneratorPage() {
   const [bankAddress, setBankAddress] = useState("");
   const [bankCity, setBankCity] = useState("");
   const [bankPostal, setBankPostal] = useState("");
-  const [bankCountry, setBankCountry] = useState("CH");
+  const [bankCountry, setBankCountry] = useState("DE");
   const [bankPhone, setBankPhone] = useState("");
   const [bankUrl, setBankUrl] = useState("");
   const [bankOpeningHours, setBankOpeningHours] = useState("");
@@ -567,7 +567,7 @@ export default function SchemaGeneratorPage() {
                 </select>
                 <input type="text" placeholder="Produktname (z.B. Festhypothek 10 Jahre)" value={finProductName} onChange={(e) => setFinProductName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white" />
                 <textarea placeholder="Produktbeschreibung" value={finProductDescription} onChange={(e) => setFinProductDescription(e.target.value)} rows={3} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white resize-none" />
-                <input type="text" placeholder="Anbieter (z.B. UBS)" value={finProductProvider} onChange={(e) => setFinProductProvider(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <input type="text" placeholder="Anbieter (z.B. TARGOBANK)" value={finProductProvider} onChange={(e) => setFinProductProvider(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white" />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">Zinssatz (%)</label>

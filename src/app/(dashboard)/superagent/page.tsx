@@ -10,9 +10,9 @@ interface Message {
 }
 
 const suggestedPrompts = [
-  "Auf welcher Position rankt ubs.com für 'Hypothek Schweiz'?",
+  "Auf welcher Position rankt die Website für 'Kredit Deutschland'?",
   "Was ist das Suchvolumen für 'Online Banking', 'Mobile Banking' und 'E-Banking'?",
-  "Zeig mir eine Zusammenfassung des Backlink-Profils von ubs.com",
+  "Zeig mir eine Zusammenfassung des Backlink-Profils von targobank.de",
   "Welche sind die Top 10 verweisenden Domains?",
 ];
 

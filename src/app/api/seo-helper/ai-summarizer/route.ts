@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Fetch the URL content through Swiss proxy
+      // Fetch the URL content through proxy
       const response = await proxyFetch(url, {
         headers: DEFAULT_SCRAPE_HEADERS,
         timeoutMs: 15000,

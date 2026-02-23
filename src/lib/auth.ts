@@ -110,7 +110,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Resend({
       apiKey: process.env.RESEND_API_KEY,
-      from: process.env.EMAIL_FROM || "SME Dashboard <system@smedash.com>",
+      from: process.env.EMAIL_FROM || "SEO Dashboard <system@smedash.com>",
       // Custom sendVerificationRequest: Sendet Link zur Zwischenseite statt direkt zum Callback
       // Dies verhindert, dass Security-Scanner den Token "verbrauchen"
       sendVerificationRequest: async ({ identifier: email, url }) => {

@@ -220,7 +220,7 @@ export default function FAQGeneratorPage() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-              placeholder="z.B. Hypothek Schweiz, E-Auto, Kreditkarte vergleichen..."
+              placeholder="z.B. Kredit vergleichen, Girokonto, Tagesgeld Zinsen..."
               className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <button

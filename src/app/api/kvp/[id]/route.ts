@@ -187,7 +187,7 @@ export async function PATCH(
         data: {
           userId: session.user.id,
           name: "Standard Tracker",
-          location: "Switzerland",
+          location: "Germany",
           language: "German",
         },
       });

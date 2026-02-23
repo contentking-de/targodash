@@ -125,11 +125,11 @@ export async function getRankTrackerResults(
  */
 export async function fetchRankings(
   keywords: Array<{ keyword: string; targetUrl?: string | null }>,
-  location: string = "Switzerland",
+  location: string = "Germany",
   language: string = "German"
 ): Promise<RankTrackerResult[]> {
-  // ERZWINGE IMMER Schweiz - ignoriere übergebene Location
-  const forcedLocation = "Switzerland";
+  // ERZWINGE IMMER Deutschland - ignoriere übergebene Location
+  const forcedLocation = "Germany";
   const forcedLanguage = language || "German";
   
   console.log(`[fetchRankings] Location Parameter: "${location}", ERZWUNGEN: "${forcedLocation}"`);
@@ -147,10 +147,10 @@ export async function fetchRankings(
     Italian: "it",
   };
 
-  const locationCode = locationCodeMap[forcedLocation] || 2756;
+  const locationCode = locationCodeMap[forcedLocation] || 2276;
   const languageCode = languageCodeMap[forcedLanguage] || "de";
   
-  console.log(`[fetchRankings] Verwende Location Code: ${locationCode} (Schweiz), Language Code: ${languageCode}`);
+  console.log(`[fetchRankings] Verwende Location Code: ${locationCode} (Deutschland), Language Code: ${languageCode}`);
   console.log(`[fetchRankings] Verarbeite ${keywords.length} Keywords mit LIVE API...`);
 
   const allResults: RankTrackerResult[] = [];
@@ -258,15 +258,15 @@ export interface SearchVolumeResult {
 /**
  * Ruft das Suchvolumen für Keywords ab - verwendet den LIVE Endpunkt
  * Basiert auf: https://docs.dataforseo.com/v3/keywords_data/google_ads/search_volume/live/
- * HINWEIS: Location wird IMMER auf Schweiz gesetzt, unabhängig vom übergebenen Parameter
+ * HINWEIS: Location wird IMMER auf Deutschland gesetzt, unabhängig vom übergebenen Parameter
  */
 export async function fetchSearchVolume(
   keywords: string[],
-  location: string = "Switzerland",
+  location: string = "Germany",
   language: string = "German"
 ): Promise<SearchVolumeResult[]> {
-  // ERZWINGE IMMER Schweiz - ignoriere übergebene Location (wie bei fetchRankings)
-  const forcedLocation = "Switzerland";
+  // ERZWINGE IMMER Deutschland - ignoriere übergebene Location (wie bei fetchRankings)
+  const forcedLocation = "Germany";
   const forcedLanguage = language || "German";
 
   // Location und Language Codes
@@ -283,12 +283,12 @@ export async function fetchSearchVolume(
     Italian: "it",
   };
 
-  const locationCode = locationCodeMap[forcedLocation] || 2756;
+  const locationCode = locationCodeMap[forcedLocation] || 2276;
   const languageCode = languageCodeMap[forcedLanguage] || "de";
 
   console.log(`[fetchSearchVolume] Rufe Suchvolumen für ${keywords.length} Keywords ab`);
   console.log(`[fetchSearchVolume] Location Parameter: "${location}", ERZWUNGEN: "${forcedLocation}"`);
-  console.log(`[fetchSearchVolume] Location Code: ${locationCode} (Schweiz), Language Code: ${languageCode}`);
+  console.log(`[fetchSearchVolume] Location Code: ${locationCode} (Deutschland), Language Code: ${languageCode}`);
 
   // Die API unterstützt maximal 1000 Keywords pro Request
   // Wir teilen die Keywords in Batches von 100 auf
@@ -300,11 +300,10 @@ export async function fetchSearchVolume(
     console.log(`[fetchSearchVolume] Verarbeite Batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(keywords.length / batchSize)}`);
 
     try {
-      // Explizit Schweiz setzen mit location_code UND location_name
       const requestBody = [{
         keywords: batch,
-        location_code: 2756, // Schweiz - HARDCODED
-        location_name: "Switzerland",
+        location_code: 2276, // Deutschland - HARDCODED
+        location_name: "Germany",
         language_code: "de",
         language_name: "German",
       }];
@@ -442,7 +441,7 @@ export interface BacklinksResult {
 }
 
 /**
- * Ruft das Backlink-Profil für ubs.com ab
+ * Ruft das Backlink-Profil für targobank.de ab
  * Verwendet den Backlinks Live Endpunkt: https://docs.dataforseo.com/v3/backlinks/backlinks/live/
  */
 export async function fetchBacklinks(
@@ -451,8 +450,8 @@ export async function fetchBacklinks(
   orderBy: string = "rank,desc",
   filters?: { dofollow?: boolean; isLost?: boolean; isNew?: boolean }
 ): Promise<BacklinksResult> {
-  // Target ist IMMER ubs.com - keine andere Domain erlaubt
-  const target = "ubs.com";
+  // Target ist IMMER targobank.de - keine andere Domain erlaubt
+  const target = "targobank.de";
   
   console.log(`[fetchBacklinks] Rufe Backlinks für ${target} ab (Limit: ${limit}, Offset: ${offset})`);
 
@@ -520,12 +519,12 @@ export async function fetchBacklinks(
 }
 
 /**
- * Ruft eine Zusammenfassung des Backlink-Profils für ubs.com ab
+ * Ruft eine Zusammenfassung des Backlink-Profils für targobank.de ab
  * Verwendet den Backlinks Summary Endpunkt
  */
 export async function fetchBacklinksSummary(): Promise<BacklinksSummary> {
-  // Target ist IMMER ubs.com - keine andere Domain erlaubt
-  const target = "ubs.com";
+  // Target ist IMMER targobank.de - keine andere Domain erlaubt
+  const target = "targobank.de";
   
   console.log(`[fetchBacklinksSummary] Rufe Backlinks-Summary für ${target} ab`);
 
@@ -586,7 +585,7 @@ export async function fetchBacklinksSummary(): Promise<BacklinksSummary> {
 }
 
 /**
- * Ruft Referring Domains für ubs.com ab
+ * Ruft Referring Domains für targobank.de ab
  */
 export async function fetchReferringDomains(
   limit: number = 100,
@@ -612,8 +611,8 @@ export async function fetchReferringDomains(
   referring_links_semantic_locations: Record<string, number> | null;
   referring_links_countries: Record<string, number> | null;
 }> }> {
-  // Target ist IMMER ubs.com - keine andere Domain erlaubt
-  const target = "ubs.com";
+  // Target ist IMMER targobank.de - keine andere Domain erlaubt
+  const target = "targobank.de";
   
   console.log(`[fetchReferringDomains] Rufe Referring Domains für ${target} ab (Limit: ${limit}, Offset: ${offset})`);
 
@@ -662,7 +661,7 @@ export async function fetchReferringDomains(
 
 /**
  * Findet die Position einer URL in den Rankings
- * Sucht standardmäßig nach ubs.com URLs, wenn keine targetUrl angegeben ist
+ * Sucht standardmäßig nach targobank.de URLs, wenn keine targetUrl angegeben ist
  */
 export function findRankingPosition(
   results: RankTrackerResult[],
@@ -670,7 +669,7 @@ export function findRankingPosition(
   targetUrl?: string
 ): { position: number | null; url: string | null } {
   console.log(`[findRankingPosition] Suche Rankings für Keyword: "${keyword}"`);
-  console.log(`[findRankingPosition] Target URL: "${targetUrl || 'ubs.com (Standard)'}"`);
+  console.log(`[findRankingPosition] Target URL: "${targetUrl || 'targobank.de (Standard)'}"`);
   console.log(`[findRankingPosition] Anzahl Results: ${results.length}`);
   
   const result = results.find((r) => r.keyword.toLowerCase() === keyword.toLowerCase());
@@ -695,11 +694,11 @@ export function findRankingPosition(
     title: item.title?.substring(0, 50),
   })));
 
-  // Standard: Suche nach ubs.com URLs
-  const searchDomain = targetUrl || "ubs.com";
+  // Standard: Suche nach targobank.de URLs
+  const searchDomain = targetUrl || "targobank.de";
 
   // Extrahiere die Domain aus der targetUrl
-  // z.B. "ubs.com", "www.ubs.com", "https://www.ubs.com/something" -> "ubs.com"
+  // z.B. "targobank.de", "www.targobank.de", "https://www.targobank.de/something" -> "targobank.de"
   let normalizedTarget = searchDomain.toLowerCase();
   
   // Entferne Protokoll
@@ -742,7 +741,7 @@ export function findRankingPosition(
     const itemDomain = item.domain?.toLowerCase().replace(/^www\./, "") || "";
     
     // Prüfe ob die URL oder Domain die Target-Domain enthält
-    // Wichtig: Prüfe auch ob die Domain mit der Target-Domain endet (z.B. "ubs.com" in "www.ubs.com")
+    // Wichtig: Prüfe auch ob die Domain mit der Target-Domain endet (z.B. "targobank.de" in "www.targobank.de")
     const urlMatches = normalizedItemUrl.includes(normalizedTarget);
     const domainMatches = itemDomain.includes(normalizedTarget) || itemDomain.endsWith(`.${normalizedTarget}`);
     const matches = urlMatches || domainMatches;

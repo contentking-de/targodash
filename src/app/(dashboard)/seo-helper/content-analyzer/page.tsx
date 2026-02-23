@@ -302,7 +302,7 @@ export default function ContentAnalyzerPage() {
                 type="text"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                placeholder="z.B. Hypothek Schweiz"
+                placeholder="z.B. Kredit vergleichen"
                 className={`w-full px-4 py-3 rounded-xl border bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
                   inputMode === "url" && !keyword.trim() 
                     ? "border-amber-300 dark:border-amber-600" 

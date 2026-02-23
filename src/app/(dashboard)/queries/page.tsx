@@ -18,7 +18,7 @@ export default function QueriesPage() {
   const [period, setPeriod] = useState("28d");
   const [data, setData] = useState<QueryRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [brandFilter, setBrandFilter] = useState("ubs");
+  const [brandFilter, setBrandFilter] = useState("targobank");
   const [excludeBrand, setExcludeBrand] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -132,7 +132,7 @@ export default function QueriesPage() {
             type="text"
             value={brandFilter}
             onChange={(e) => setBrandFilter(e.target.value)}
-            placeholder="z.B. ubs, bank"
+            placeholder="z.B. targobank, targo"
             disabled={!excludeBrand}
             className="flex-1 min-w-[200px] max-w-[400px] px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           />

@@ -182,14 +182,14 @@ export default function KeywordClusteringPage() {
               <textarea
                 value={keywordsInput}
                 onChange={(e) => setKeywordsInput(e.target.value)}
-                placeholder={`hypothek schweiz
-hypothek berechnen
-hypothek zinsen
-hypothek vergleich
-immobilien kaufen
-haus kaufen schweiz
-wohnung kaufen
-immobilien finanzierung
+                placeholder={`kredit vergleichen
+kredit beantragen
+kredit zinsen
+kredit online
+girokonto eröffnen
+girokonto vergleich
+tagesgeld zinsen
+festgeld anlegen
 kredit aufnehmen
 privatkredit vergleich`}
                 rows={12}

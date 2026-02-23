@@ -228,7 +228,7 @@ export default function PagesPage() {
                 render: (value, row) => (
                   value ? (
                     <Link
-                      href={`/ubs-kvp?search=${encodeURIComponent(String(row.page))}`}
+                      href={`/kvp?search=${encodeURIComponent(String(row.page))}`}
                       className="inline-flex items-center justify-center w-6 h-6 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                       title="KVP vorhanden - klicken zum Anzeigen"
                     >
@@ -238,7 +238,7 @@ export default function PagesPage() {
                     </Link>
                   ) : (
                     <Link
-                      href={`/ubs-kvp`}
+                      href={`/kvp`}
                       className="inline-flex items-center justify-center w-6 h-6 text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
                       title="Kein KVP vorhanden - klicken zum Erstellen"
                     >

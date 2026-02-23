@@ -260,7 +260,7 @@ export default function LinkprofilPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Linkprofil</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Backlink-Analyse für <span className="font-semibold text-blue-600 dark:text-blue-400">ubs.com</span>
+            Backlink-Analyse für <span className="font-semibold text-blue-600 dark:text-blue-400">targobank.de</span>
           </p>
         </div>
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-8 text-center">
@@ -271,7 +271,7 @@ export default function LinkprofilPage() {
           </div>
           <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Noch keine Daten vorhanden</h3>
           <p className="text-slate-600 dark:text-slate-400 mb-6">
-            Klicke auf &quot;Daten abrufen&quot;, um das Linkprofil von ubs.com zu laden.<br />
+            Klicke auf &quot;Daten abrufen&quot;, um das Linkprofil von targobank.de zu laden.<br />
             <span className="text-sm text-slate-500">Hinweis: Dies verbraucht API-Credits bei DataForSEO.</span>
           </p>
           <button
@@ -308,7 +308,7 @@ export default function LinkprofilPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Linkprofil</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Backlink-Analyse für <span className="font-semibold text-blue-600 dark:text-blue-400">ubs.com</span>
+            Backlink-Analyse für <span className="font-semibold text-blue-600 dark:text-blue-400">targobank.de</span>
             {lastUpdated && (
               <span className="ml-2 text-sm text-slate-500">
                 • Stand: {formatLastUpdated(lastUpdated)}

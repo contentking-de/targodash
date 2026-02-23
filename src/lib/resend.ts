@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
-const EMAIL_FROM = process.env.EMAIL_FROM || "SME Dashboard <system@smedash.com>";
+const EMAIL_FROM = process.env.EMAIL_FROM || "SEO Dashboard <system@smedash.com>";
 
 export async function sendMagicLinkEmail({
   to,
@@ -24,7 +24,7 @@ export async function sendMagicLinkEmail({
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
           <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <h1 style="color: #18181b; font-size: 24px; margin: 0 0 16px 0;">SME Dashboard</h1>
+            <h1 style="color: #18181b; font-size: 24px; margin: 0 0 16px 0;">SEO Dashboard</h1>
             <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
               Klicke auf den Button unten, um Dich einzuloggen. Dieser Link ist 24 Stunden gültig.
             </p>
@@ -86,7 +86,7 @@ export async function sendNewBriefingNotification({
               Briefing ansehen
             </a>
             <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0;">
-              Diese E-Mail wurde automatisch vom SME Dashboard versendet.
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
             </p>
           </div>
         </body>
@@ -167,7 +167,7 @@ export async function sendTaskAssignmentNotification({
               Task ansehen
             </a>
             <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0;">
-              Diese E-Mail wurde automatisch vom SME Dashboard versendet.
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
             </p>
           </div>
         </body>
@@ -225,7 +225,7 @@ export async function sendTaskCommentNotification({
               Task ansehen
             </a>
             <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0;">
-              Diese E-Mail wurde automatisch vom SME Dashboard versendet.
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
             </p>
           </div>
         </body>
@@ -289,7 +289,7 @@ export async function sendBriefingCompletedNotification({
               </a>
             </div>
             <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0; text-align: center;">
-              Diese E-Mail wurde automatisch vom SME Dashboard versendet.
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
             </p>
           </div>
         </body>
@@ -375,7 +375,7 @@ export async function sendTicketAssignmentNotification({
               Ticket ansehen
             </a>
             <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0;">
-              Diese E-Mail wurde automatisch vom SME Dashboard versendet.
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
             </p>
           </div>
         </body>
@@ -439,7 +439,7 @@ export async function sendTicketUpdateNotification({
               Ticket ansehen
             </a>
             <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0;">
-              Diese E-Mail wurde automatisch vom SME Dashboard versendet.
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
             </p>
           </div>
         </body>
@@ -469,7 +469,7 @@ export async function sendWelcomeEmail({
   const { data, error } = await resend.emails.send({
     from: EMAIL_FROM,
     to: to,
-    subject: "Willkommen im SME Dashboard",
+    subject: "Willkommen im SEO Dashboard",
     html: `
       <!DOCTYPE html>
       <html>
@@ -479,12 +479,12 @@ export async function sendWelcomeEmail({
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
           <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <h1 style="color: #18181b; font-size: 24px; margin: 0 0 16px 0;">Willkommen im SME Dashboard</h1>
+            <h1 style="color: #18181b; font-size: 24px; margin: 0 0 16px 0;">Willkommen im SEO Dashboard</h1>
             <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-              Du wurdest von <strong>${invitedByName}</strong> zum SME Dashboard eingeladen.
+              Du wurdest von <strong>${invitedByName}</strong> zum SEO Dashboard eingeladen.
             </p>
             <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-              Ab sofort kannst Du Dich mit Deiner E-Mail-Adresse <strong>${to}</strong> im SME Dashboard anmelden.
+              Ab sofort kannst Du Dich mit Deiner E-Mail-Adresse <strong>${to}</strong> im SEO Dashboard anmelden.
             </p>
             <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
               Klicke auf den Button unten, um zur Anmeldeseite zu gelangen. Du erhältst dann einen Magic Link per E-Mail, mit dem Du Dich einloggen kannst.

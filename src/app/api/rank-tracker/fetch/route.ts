@@ -32,12 +32,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Stelle sicher, dass Location auf Switzerland gesetzt ist
-    if (tracker.location !== "Switzerland") {
-      console.log(`[fetchRankings] Aktualisiere Location von "${tracker.location}" auf "Switzerland"`);
+    // Stelle sicher, dass Location auf Germany gesetzt ist
+    if (tracker.location !== "Germany") {
+      console.log(`[fetchRankings] Aktualisiere Location von "${tracker.location}" auf "Germany"`);
       tracker = await prisma.rankTracker.update({
         where: { id: tracker.id },
-        data: { location: "Switzerland" },
+        data: { location: "Germany" },
         include: {
           keywords: true,
         },
@@ -50,15 +50,15 @@ export async function POST(request: NextRequest) {
       targetUrl: k.targetUrl,
     }));
     
-    // ERZWINGE IMMER Schweiz für Rankings
-    const forcedLocation = "Switzerland";
+    // ERZWINGE IMMER Deutschland für Rankings
+    const forcedLocation = "Germany";
     const forcedLanguage = tracker.language || "German";
     
     console.log(`[fetchRankings] Starte Ranking-Abruf für ${tracker.keywords.length} Keywords`);
     console.log(`[fetchRankings] Location: ${forcedLocation} (ERZWUNGEN), Language: ${forcedLanguage}`);
-    console.log(`[fetchRankings] Keywords:`, tracker.keywords.map(k => ({ keyword: k.keyword, targetUrl: k.targetUrl || "ubs.com (Standard)" })));
+    console.log(`[fetchRankings] Keywords:`, tracker.keywords.map(k => ({ keyword: k.keyword, targetUrl: k.targetUrl || "targobank.de (Standard)" })));
     
-    // Rufe Rankings ab - IMMER für die Schweiz
+    // Rufe Rankings ab - IMMER für Deutschland
     const results = await fetchRankings(
       keywords,
       forcedLocation,
@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
     // Speichere Rankings in Datenbank
     const savedRankings = [];
     for (const keyword of tracker.keywords) {
-      // Wenn keine targetUrl angegeben, verwende automatisch ubs.com
-      const targetUrl = keyword.targetUrl || "ubs.com";
+      // Wenn keine targetUrl angegeben, verwende automatisch targobank.de
+      const targetUrl = keyword.targetUrl || "targobank.de";
       console.log(`[fetchRankings] Verarbeite Keyword: "${keyword.keyword}" mit Target: "${targetUrl}"`);
       
       const rankingData = findRankingPosition(results, keyword.keyword, targetUrl);

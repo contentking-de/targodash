@@ -298,7 +298,7 @@ export default function RankTrackerPage() {
         id: keyword.id,
         keyword: keyword.keyword,
         category: keyword.category,
-        targetUrl: keyword.targetUrl || "ubs.com",
+        targetUrl: keyword.targetUrl || "targobank.de",
         position: currentPosition,
         deltaLast: calculateDelta(currentPosition, previousPosition),
         deltaFirst: calculateDelta(currentPosition, firstPosition),
@@ -643,11 +643,11 @@ export default function RankTrackerPage() {
                 type="text"
                 value={newTargetUrl}
                 onChange={(e) => setNewTargetUrl(e.target.value)}
-                placeholder="ubs.com (Standard)"
+                placeholder="targobank.de (Standard)"
                 className="w-full px-4 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                Standardmäßig wird nach ubs.com URLs gesucht. Du kannst eine andere Domain angeben.
+                Standardmäßig wird nach targobank.de URLs gesucht. Du kannst eine andere Domain angeben.
               </p>
             </div>
             <div className="flex gap-3">
@@ -789,7 +789,7 @@ export default function RankTrackerPage() {
                     }
                     return (
                       <a
-                        href={`/ubs-kvp?search=${encodeURIComponent(kvp.focusKeyword)}`}
+                        href={`/kvp?search=${encodeURIComponent(kvp.focusKeyword)}`}
                         className="inline-flex items-center gap-1 px-2 py-1 bg-green-600/20 text-green-400 hover:bg-green-600/30 rounded text-xs transition-colors"
                         title={`KVP: ${kvp.focusKeyword}`}
                       >

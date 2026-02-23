@@ -74,8 +74,8 @@ export async function GET(request: NextRequest) {
           targetUrl: k.targetUrl,
         }));
 
-        // ERZWINGE IMMER Schweiz für Rankings
-        const forcedLocation = "Switzerland";
+        // ERZWINGE IMMER Deutschland für Rankings
+        const forcedLocation = "Germany";
         const forcedLanguage = tracker.language || "German";
 
         console.log(`[Cron Rank Tracker] Location: ${forcedLocation}, Language: ${forcedLanguage}`);
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 
         // Speichere Rankings in Datenbank
         for (const keyword of tracker.keywords) {
-          const targetUrl = keyword.targetUrl || "ubs.com";
+          const targetUrl = keyword.targetUrl || "targobank.de";
           const rankingData = findRankingPosition(results, keyword.keyword, targetUrl);
 
           // Speichere Ranking (auch wenn position null ist)
