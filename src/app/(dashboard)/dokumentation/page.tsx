@@ -366,12 +366,6 @@ const docSections: DocSection[] = [
         link: "/tickets",
         linkLabel: "Zu Bugs & Features",
       },
-      {
-        title: "Changelog",
-        body: "Im Changelog findest du alle Änderungen und neuen Features, die am SEO Dashboard vorgenommen wurden. So bleibst du immer auf dem neuesten Stand über Verbesserungen und neue Funktionen.",
-        link: "/changelog",
-        linkLabel: "Zum Changelog",
-      },
     ],
   },
 ];
