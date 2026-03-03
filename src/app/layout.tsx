@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Targobank SEO Dashboard",
+  title: "SEOdaten.com Dashboard",
   description: "Google Search Console Analytics Dashboard",
   robots: {
     index: false,
