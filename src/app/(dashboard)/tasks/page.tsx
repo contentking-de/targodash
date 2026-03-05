@@ -832,8 +832,8 @@ function TaskDetailModal({
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Kommentar oder Notiz hinzufügen..."
-                  rows={3}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm resize-none border-0 focus:ring-0 focus:outline-none"
+                  rows={6}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm resize-y border-0 focus:ring-0 focus:outline-none min-h-[120px]"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                       handleAddComment();
