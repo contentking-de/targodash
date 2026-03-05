@@ -32,9 +32,9 @@ export function PieChart({ data, height = 300 }: PieChartProps) {
         <Pie
           data={dataWithPercent}
           cx="50%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={100}
+          cy="40%"
+          innerRadius="35%"
+          outerRadius="55%"
           paddingAngle={2}
           dataKey="value"
           nameKey="name"
@@ -78,9 +78,9 @@ export function PieChart({ data, height = 300 }: PieChartProps) {
               </span>
             );
           }}
-          layout="vertical"
-          align="right"
-          verticalAlign="middle"
+          layout="horizontal"
+          align="center"
+          verticalAlign="bottom"
         />
       </RechartsPieChart>
     </ResponsiveContainer>
