@@ -513,24 +513,28 @@ model TaskFile {
 
 // Redaktionsplan - Kalenderübersicht für Content-Planung
 model EditorialPlanEntry {
-  id          String                    @id @default(cuid())
-  title       String
-  description String?                   @db.Text
-  url         String?                   @db.Text
-  category    String?                   // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge
-  status      String                    @default("planned") // planned, in_progress, review, published
-  dueDate     DateTime
-  creatorId   String
-  creator     User                      @relation("EditorialPlanCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  assignees   EditorialPlanAssignee[]
-  files       EditorialPlanFile[]
-  createdAt   DateTime                  @default(now())
-  updatedAt   DateTime                  @updatedAt
+  id                String                    @id @default(cuid())
+  title             String
+  description       String?                   @db.Text
+  url               String?                   @db.Text
+  category          String?                   // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge
+  ratgeberCategory  String?                   // Ratgeber-Kategorie: Erstfinanzierung, Kapitalanlage, Immobilie, etc.
+  funnel            String?                   // Funnel-Stufe: Upper-Funnel, Mid-Funnel, Lower-Funnel
+  status            String                    @default("planned") // planned, in_progress, review, published
+  dueDate           DateTime
+  creatorId         String
+  creator           User                      @relation("EditorialPlanCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  assignees         EditorialPlanAssignee[]
+  files             EditorialPlanFile[]
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
 
   @@index([creatorId])
   @@index([status])
   @@index([dueDate])
   @@index([category])
+  @@index([ratgeberCategory])
+  @@index([funnel])
 }
 
 model EditorialPlanFile {

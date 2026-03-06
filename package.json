@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "add-user": "tsx scripts/add-user.ts",
-    "migrate-categories": "tsx scripts/migrate-categories.ts"
+    "migrate-categories": "tsx scripts/migrate-categories.ts",
+    "import-redaktionsplan": "tsx scripts/import-redaktionsplan.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, url, category, dueDate, assigneeIds } = body;
+    const { title, description, url, category, ratgeberCategory, funnel, dueDate, assigneeIds } = body;
 
     if (!title?.trim()) {
       return NextResponse.json({ error: "Titel ist erforderlich" }, { status: 400 });
@@ -70,6 +70,8 @@ export async function POST(request: NextRequest) {
         description: description?.trim() || null,
         url: url?.trim() || null,
         category: category || null,
+        ratgeberCategory: ratgeberCategory || null,
+        funnel: funnel || null,
         status: "planned",
         dueDate: new Date(dueDate),
         creatorId: session.user.id,

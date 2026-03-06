@@ -8,6 +8,7 @@ const STATUS_LABELS: Record<string, string> = {
   planned: "Geplant",
   in_progress: "In Bearbeitung",
   review: "Review",
+  approved: "Freigegeben",
   published: "Veröffentlicht",
 };
 
@@ -74,7 +75,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, description, url, category, status, dueDate, assigneeIds } = body;
+    const { title, description, url, category, ratgeberCategory, funnel, status, dueDate, assigneeIds } = body;
 
     const existingEntry = await prisma.editorialPlanEntry.findUnique({
       where: { id },
@@ -100,6 +101,8 @@ export async function PATCH(
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (url !== undefined) updateData.url = url?.trim() || null;
     if (category !== undefined) updateData.category = category || null;
+    if (ratgeberCategory !== undefined) updateData.ratgeberCategory = ratgeberCategory || null;
+    if (funnel !== undefined) updateData.funnel = funnel || null;
     if (status !== undefined) updateData.status = status;
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : undefined;
 

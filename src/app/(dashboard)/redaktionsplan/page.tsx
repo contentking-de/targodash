@@ -25,6 +25,8 @@ interface EditorialEntry {
   description: string | null;
   url: string | null;
   category: string | null;
+  ratgeberCategory: string | null;
+  funnel: string | null;
   status: string;
   dueDate: string;
   creatorId: string;
@@ -42,10 +44,28 @@ const CATEGORIES = [
   "Schutz & Vorsorge",
 ];
 
+const RATGEBER_CATEGORIES = [
+  "Erstfinanzierung",
+  "Kapitalanlage",
+  "Immobilie",
+  "Anschlussfinanzierung",
+  "Modernisierung",
+  "Studien und Whitepaper",
+  "Lexikon",
+  "Checklisten für Käufer und Inhaber",
+];
+
+const FUNNEL_OPTIONS = [
+  { value: "Upper-Funnel", label: "Upper-Funnel", color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300" },
+  { value: "Mid-Funnel", label: "Mid-Funnel", color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300" },
+  { value: "Lower-Funnel", label: "Lower-Funnel", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300" },
+];
+
 const STATUS_OPTIONS = [
   { value: "planned", label: "Geplant", color: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300" },
   { value: "in_progress", label: "In Bearbeitung", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
   { value: "review", label: "Review", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+  { value: "approved", label: "Freigegeben", color: "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300" },
   { value: "published", label: "Veröffentlicht", color: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" },
 ];
 
@@ -54,6 +74,28 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Kredit & Finanzierung": "border-l-green-500",
   "Sparen & Investieren": "border-l-purple-500",
   "Schutz & Vorsorge": "border-l-orange-500",
+};
+
+const RATGEBER_CATEGORY_COLORS: Record<string, string> = {
+  "Erstfinanzierung": "border-l-emerald-500",
+  "Kapitalanlage": "border-l-violet-500",
+  "Immobilie": "border-l-amber-500",
+  "Anschlussfinanzierung": "border-l-sky-500",
+  "Modernisierung": "border-l-rose-500",
+  "Studien und Whitepaper": "border-l-indigo-500",
+  "Lexikon": "border-l-teal-500",
+  "Checklisten für Käufer und Inhaber": "border-l-fuchsia-500",
+};
+
+const RATGEBER_CATEGORY_BG_COLORS: Record<string, string> = {
+  "Erstfinanzierung": "bg-emerald-500",
+  "Kapitalanlage": "bg-violet-500",
+  "Immobilie": "bg-amber-500",
+  "Anschlussfinanzierung": "bg-sky-500",
+  "Modernisierung": "bg-rose-500",
+  "Studien und Whitepaper": "bg-indigo-500",
+  "Lexikon": "bg-teal-500",
+  "Checklisten für Käufer und Inhaber": "bg-fuchsia-500",
 };
 
 function getStatusConfig(status: string) {
@@ -171,12 +213,16 @@ export default function RedaktionsplanPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterRatgeberCategory, setFilterRatgeberCategory] = useState<string>("all");
+  const [filterFunnel, setFilterFunnel] = useState<string>("all");
 
   // Form state
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formUrl, setFormUrl] = useState("");
   const [formCategory, setFormCategory] = useState("");
+  const [formRatgeberCategory, setFormRatgeberCategory] = useState("");
+  const [formFunnel, setFormFunnel] = useState("");
   const [formStatus, setFormStatus] = useState("planned");
   const [formDueDate, setFormDueDate] = useState("");
   const [formAssigneeIds, setFormAssigneeIds] = useState<string[]>([]);
@@ -213,9 +259,11 @@ export default function RedaktionsplanPage() {
     return entries.filter((e) => {
       if (filterStatus !== "all" && e.status !== filterStatus) return false;
       if (filterCategory !== "all" && e.category !== filterCategory) return false;
+      if (filterRatgeberCategory !== "all" && e.ratgeberCategory !== filterRatgeberCategory) return false;
+      if (filterFunnel !== "all" && e.funnel !== filterFunnel) return false;
       return true;
     });
-  }, [entries, filterStatus, filterCategory]);
+  }, [entries, filterStatus, filterCategory, filterRatgeberCategory, filterFunnel]);
 
   const entriesByDate = useMemo(() => {
     const map: Record<string, EditorialEntry[]> = {};
@@ -259,6 +307,8 @@ export default function RedaktionsplanPage() {
     setFormDescription("");
     setFormUrl("");
     setFormCategory("");
+    setFormRatgeberCategory("");
+    setFormFunnel("");
     setFormStatus("planned");
     setFormDueDate(dateStr || new Date().toISOString().slice(0, 10));
     setFormAssigneeIds([]);
@@ -271,6 +321,8 @@ export default function RedaktionsplanPage() {
     setFormDescription(entry.description || "");
     setFormUrl(entry.url || "");
     setFormCategory(entry.category || "");
+    setFormRatgeberCategory(entry.ratgeberCategory || "");
+    setFormFunnel(entry.funnel || "");
     setFormStatus(entry.status);
     setFormDueDate(entry.dueDate.slice(0, 10));
     setFormAssigneeIds(entry.assignees.map((a) => a.id));
@@ -287,6 +339,8 @@ export default function RedaktionsplanPage() {
         description: formDescription.trim() || null,
         url: formUrl.trim() || null,
         category: formCategory || null,
+        ratgeberCategory: formRatgeberCategory || null,
+        funnel: formFunnel || null,
         status: formStatus,
         dueDate: formDueDate,
         assigneeIds: formAssigneeIds,
@@ -461,6 +515,26 @@ export default function RedaktionsplanPage() {
           ))}
         </select>
         <select
+          value={filterRatgeberCategory}
+          onChange={(e) => setFilterRatgeberCategory(e.target.value)}
+          className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm"
+        >
+          <option value="all">Alle Ratgeber-Kategorien</option>
+          {RATGEBER_CATEGORIES.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+        <select
+          value={filterFunnel}
+          onChange={(e) => setFilterFunnel(e.target.value)}
+          className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm"
+        >
+          <option value="all">Alle Funnel</option>
+          {FUNNEL_OPTIONS.map((f) => (
+            <option key={f.value} value={f.value}>{f.label}</option>
+          ))}
+        </select>
+        <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
           className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm"
@@ -568,7 +642,7 @@ export default function RedaktionsplanPage() {
                     <div className="space-y-0.5">
                       {dayEntries.slice(0, 3).map((entry) => {
                         const statusCfg = getStatusConfig(entry.status);
-                        const borderColor = CATEGORY_COLORS[entry.category || ""] || "border-l-slate-400";
+                        const borderColor = RATGEBER_CATEGORY_COLORS[entry.ratgeberCategory || ""] || CATEGORY_COLORS[entry.category || ""] || "border-l-slate-400";
                         return (
                           <button
                             key={entry.id}
@@ -577,7 +651,7 @@ export default function RedaktionsplanPage() {
                               openEditModal(entry);
                             }}
                             className={`w-full text-left px-1.5 py-0.5 rounded text-[11px] leading-tight truncate border-l-2 ${borderColor} ${statusCfg.color} hover:opacity-80 transition-opacity`}
-                            title={entry.title}
+                            title={`${entry.title}${entry.ratgeberCategory ? ` · ${entry.ratgeberCategory}` : ""}${entry.funnel ? ` · ${entry.funnel}` : ""}`}
                           >
                             {entry.title}
                           </button>
@@ -619,7 +693,8 @@ export default function RedaktionsplanPage() {
           <div className="space-y-3">
             {entriesByDate[selectedDay].map((entry) => {
               const statusCfg = getStatusConfig(entry.status);
-              const borderColor = CATEGORY_COLORS[entry.category || ""] || "border-l-slate-400";
+              const borderColor = RATGEBER_CATEGORY_COLORS[entry.ratgeberCategory || ""] || CATEGORY_COLORS[entry.category || ""] || "border-l-slate-400";
+              const funnelCfg = FUNNEL_OPTIONS.find((f) => f.value === entry.funnel);
               return (
                 <div
                   key={entry.id}
@@ -636,6 +711,16 @@ export default function RedaktionsplanPage() {
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusCfg.color}`}>
                           {statusCfg.label}
                         </span>
+                        {entry.ratgeberCategory && (
+                          <span className="px-2 py-0.5 rounded text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300">
+                            {entry.ratgeberCategory}
+                          </span>
+                        )}
+                        {funnelCfg && (
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${funnelCfg.color}`}>
+                            {funnelCfg.label}
+                          </span>
+                        )}
                         {entry.category && (
                           <span className="px-2 py-0.5 rounded text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                             {entry.category}
@@ -671,7 +756,50 @@ export default function RedaktionsplanPage() {
 
       {/* Upcoming entries list */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Anstehende Einträge</h3>
+        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Artikel und Content-Übersicht</h3>
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Gesamt: {filteredEntries.length}
+          </span>
+          <span className="text-slate-300 dark:text-slate-600">|</span>
+          {STATUS_OPTIONS.map((s) => {
+            const count = filteredEntries.filter((e) => e.status === s.value).length;
+            return (
+              <span key={s.value} className={`px-2 py-0.5 rounded text-xs font-medium ${s.color}`}>
+                {s.label}: {count}
+              </span>
+            );
+          })}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-4 text-xs text-slate-500 dark:text-slate-400">
+          <span className="font-medium text-slate-700 dark:text-slate-300">Legende:</span>
+          {RATGEBER_CATEGORIES.map((cat) => {
+            const colorClass = RATGEBER_CATEGORY_BG_COLORS[cat] || "bg-slate-400";
+            const isActive = filterRatgeberCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setFilterRatgeberCategory(isActive ? "all" : cat)}
+                className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded transition-all ${
+                  isActive
+                    ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-700/50 opacity-70 hover:opacity-100"
+                }`}
+              >
+                <span className={`w-3 h-3 rounded-sm ${colorClass}`} />
+                <span>{cat}</span>
+              </button>
+            );
+          })}
+          {filterRatgeberCategory !== "all" && (
+            <button
+              onClick={() => setFilterRatgeberCategory("all")}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Filter zurücksetzen
+            </button>
+          )}
+        </div>
         {filteredEntries.filter((e) => e.status !== "published").length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">Keine anstehenden Einträge.</p>
         ) : (
@@ -681,7 +809,7 @@ export default function RedaktionsplanPage() {
               .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
               .map((entry) => {
                 const statusCfg = getStatusConfig(entry.status);
-                const borderColor = CATEGORY_COLORS[entry.category || ""] || "border-l-slate-400";
+                const borderColor = RATGEBER_CATEGORY_COLORS[entry.ratgeberCategory || ""] || CATEGORY_COLORS[entry.category || ""] || "border-l-slate-400";
                 const isOverdue = entry.dueDate.slice(0, 10) < todayStr;
                 return (
                   <div
@@ -699,6 +827,16 @@ export default function RedaktionsplanPage() {
                         {entry.assignees.length > 0 && (
                           <span className="text-xs text-slate-400 dark:text-slate-500">
                             · {entry.assignees.map((a) => a.name || a.email).join(", ")}
+                          </span>
+                        )}
+                        {entry.ratgeberCategory && (
+                          <span className="px-1.5 py-0.5 rounded text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300">
+                            {entry.ratgeberCategory}
+                          </span>
+                        )}
+                        {entry.funnel && (
+                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${FUNNEL_OPTIONS.find((f) => f.value === entry.funnel)?.color || "bg-slate-100 text-slate-600"}`}>
+                            {entry.funnel}
                           </span>
                         )}
                       </div>
@@ -790,6 +928,40 @@ export default function RedaktionsplanPage() {
                   placeholder="https://..."
                   className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              {/* Ratgeber-Kategorie + Funnel Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Ratgeber-Kategorie
+                  </label>
+                  <select
+                    value={formRatgeberCategory}
+                    onChange={(e) => setFormRatgeberCategory(e.target.value)}
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Keine Ratgeber-Kategorie</option>
+                    {RATGEBER_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Funnel
+                  </label>
+                  <select
+                    value={formFunnel}
+                    onChange={(e) => setFormFunnel(e.target.value)}
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Kein Funnel</option>
+                    {FUNNEL_OPTIONS.map((f) => (
+                      <option key={f.value} value={f.value}>{f.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Category + Due Date Row */}
