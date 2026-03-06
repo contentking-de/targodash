@@ -21,7 +21,7 @@ function extractTextFromCell(cellValue: unknown): string | null {
 
 function cleanTitle(raw: string): string {
   let cleaned = raw.replace(/^\d+\.\s*/, "").trim();
-  cleaned = cleaned.replace(/[„""]/g, "").trim();
+  cleaned = cleaned.replace(/[„""\u201E\u201C\u201D\u00AB\u00BB"]/g, "").trim();
   return cleaned;
 }
 
