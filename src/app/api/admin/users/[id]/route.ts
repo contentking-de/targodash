@@ -49,7 +49,7 @@ export async function PATCH(
     }
 
     // Validiere Rolle
-    const validRoles = ["superadmin", "compliance", "legal", "dev", "member", "viewer"];
+    const validRoles = ["superadmin", "compliance", "legal", "dev", "produktmanagement", "member", "viewer"];
     const updateData: { name?: string; role?: string } = {};
     
     if (name !== undefined) updateData.name = name;
