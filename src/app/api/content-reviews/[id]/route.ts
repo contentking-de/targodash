@@ -214,6 +214,12 @@ export async function DELETE(
     return NextResponse.json({ error: "Artikel nicht gefunden" }, { status: 404 });
   }
 
+  // Reset editorial plan entry: remove content badge and revert status to "planned"
+  await prisma.editorialPlanEntry.updateMany({
+    where: { articleId: id },
+    data: { contentPushed: false, contentPushedAt: null, status: "planned" },
+  });
+
   await prisma.articleStatusHistory.deleteMany({ where: { articleId: id } });
   await prisma.contentComment.deleteMany({ where: { articleId: id } });
   await prisma.generatedArticle.delete({ where: { id } });
