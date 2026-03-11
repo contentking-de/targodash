@@ -26,6 +26,9 @@ export async function GET() {
         files: {
           orderBy: { createdAt: "desc" },
         },
+        article: {
+          select: { id: true, reviewStatus: true, title: true, wordCount: true, createdAt: true },
+        },
       },
       orderBy: { dueDate: "asc" },
     });

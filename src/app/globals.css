@@ -80,3 +80,103 @@ body {
   background: #3b82f6;
   color: white;
 }
+
+/* Content Editor – typography for the editable area */
+.content-editor-area {
+  color: #e2e8f0;
+  font-size: 14px;
+  line-height: 1.7;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.content-editor-area h1,
+.content-editor-area h2,
+.content-editor-area h3,
+.content-editor-area h4 {
+  color: #f1f5f9;
+  font-weight: 700;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+}
+
+.content-editor-area h1 { font-size: 1.75em; }
+.content-editor-area h2 { font-size: 1.4em; }
+.content-editor-area h3 { font-size: 1.15em; }
+
+.content-editor-area p {
+  margin-bottom: 0.75em;
+}
+
+.content-editor-area ul,
+.content-editor-area ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+  list-style: revert;
+}
+
+.content-editor-area li {
+  margin-bottom: 0.25em;
+}
+
+.content-editor-area a {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+.content-editor-area strong {
+  font-weight: 700;
+}
+
+.content-editor-area blockquote {
+  border-left: 3px solid #475569;
+  padding-left: 1em;
+  margin: 0.75em 0;
+  color: #94a3b8;
+}
+
+.content-editor-area table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+}
+
+.content-editor-area th,
+.content-editor-area td {
+  border: 1px solid #475569;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.content-editor-area th {
+  background-color: #334155;
+  font-weight: 600;
+}
+
+.light .content-editor-area {
+  color: #1e293b;
+}
+
+.light .content-editor-area h1,
+.light .content-editor-area h2,
+.light .content-editor-area h3,
+.light .content-editor-area h4 {
+  color: #0f172a;
+}
+
+.light .content-editor-area a {
+  color: #2563eb;
+}
+
+.light .content-editor-area blockquote {
+  border-left-color: #cbd5e1;
+  color: #64748b;
+}
+
+.light .content-editor-area th,
+.light .content-editor-area td {
+  border-color: #e2e8f0;
+}
+
+.light .content-editor-area th {
+  background-color: #f1f5f9;
+}

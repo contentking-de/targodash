@@ -1,14 +1,17 @@
 // Role-Based Access Control (RBAC) Helper
-// Rollen: superadmin/agentur > member > viewer
+// Rollen: superadmin/agentur > compliance/legal/dev > member > viewer
 
-export type Role = "superadmin" | "agentur" | "member" | "viewer";
+export type Role = "superadmin" | "agentur" | "compliance" | "legal" | "dev" | "member" | "viewer";
 
 // Rollen-Hierarchie (höhere Zahl = mehr Rechte)
 const ROLE_LEVELS: Record<Role, number> = {
   viewer: 1,
   member: 2,
+  compliance: 2,
+  legal: 2,
+  dev: 2,
   superadmin: 3,
-  agentur: 3, // Agentur hat dieselben Rechte wie Superadmin
+  agentur: 3,
 };
 
 // Prüft ob User mindestens die angegebene Rolle hat
@@ -48,6 +51,9 @@ export function canView(userRole: string | undefined | null): boolean {
 export const ROLE_LABELS: Record<Role, string> = {
   superadmin: "Superadmin",
   agentur: "Agentur",
+  compliance: "Compliance",
+  legal: "Legal",
+  dev: "Dev",
   member: "Mitglied",
   viewer: "Betrachter",
 };
@@ -56,6 +62,9 @@ export const ROLE_LABELS: Record<Role, string> = {
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   superadmin: "Volle Rechte - kann Nutzer verwalten und alle Inhalte bearbeiten",
   agentur: "Volle Rechte - kann Nutzer verwalten und alle Inhalte bearbeiten (wie Superadmin)",
+  compliance: "Compliance-Prüfer - erhält Benachrichtigungen bei Content-Reviews",
+  legal: "Legal-Prüfer - erhält Benachrichtigungen bei Legal-Reviews",
+  dev: "Entwickler - erhält Benachrichtigungen wenn Content production-ready ist",
   member: "Kann alle Inhalte sehen und bearbeiten",
   viewer: "Kann alle Inhalte nur ansehen",
 };

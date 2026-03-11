@@ -537,6 +537,92 @@ export async function sendEditorialPlanStatusNotification({
   return data;
 }
 
+// ===== Content Review Workflow Notifications =====
+
+export async function sendContentReviewNotification({
+  to,
+  articleTitle,
+  newStatus,
+  changedByName,
+  dashboardUrl,
+}: {
+  to: string;
+  articleTitle: string;
+  newStatus: string;
+  changedByName: string;
+  dashboardUrl: string;
+}) {
+  const statusLabels: Record<string, string> = {
+    compliance_review: "Compliance Review",
+    legal_review: "Legal Review",
+    production_ready: "Production Ready",
+    draft: "Zurück an Autor",
+    compliance_approved: "Zurück an Compliance",
+  };
+
+  const statusColors: Record<string, string> = {
+    compliance_review: "#d97706",
+    legal_review: "#ea580c",
+    production_ready: "#059669",
+    draft: "#ef4444",
+    compliance_approved: "#ef4444",
+  };
+
+  const statusLabel = statusLabels[newStatus] || newStatus;
+  const statusColor = statusColors[newStatus] || "#3b82f6";
+
+  const isRejection = newStatus === "draft" || newStatus === "compliance_approved";
+  const subject = isRejection
+    ? `Content zurückgewiesen: ${articleTitle}`
+    : `Content-Review: ${articleTitle} – ${statusLabel}`;
+
+  const message = isRejection
+    ? `<strong>${changedByName}</strong> hat den Artikel zurückgewiesen. Bitte prüfe die Kommentare und nimm die gewünschten Änderungen vor.`
+    : `<strong>${changedByName}</strong> hat den Artikel in den Status <strong>${statusLabel}</strong> überführt. Bitte prüfe den Inhalt.`;
+
+  const { data, error } = await resend.emails.send({
+    from: EMAIL_FROM,
+    to: to,
+    subject,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <h1 style="color: #18181b; font-size: 24px; margin: 0 0 16px 0;">Content Review</h1>
+            <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+              ${message}
+            </p>
+            <div style="background-color: #f4f4f5; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <p style="color: #18181b; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">${articleTitle}</p>
+              <span style="display: inline-block; padding: 4px 10px; background-color: ${statusColor}20; color: ${statusColor}; font-size: 12px; border-radius: 4px; font-weight: 500;">
+                ${statusLabel}
+              </span>
+            </div>
+            <a href="${dashboardUrl}" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+              Artikel prüfen
+            </a>
+            <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0;">
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
+            </p>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+
+  if (error) {
+    console.error("Failed to send content review notification email:", error);
+    throw error;
+  }
+
+  return data;
+}
+
 export async function sendWelcomeEmail({
   to,
   invitedBy,

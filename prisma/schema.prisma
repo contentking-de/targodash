@@ -18,7 +18,7 @@ model User {
   email         String        @unique
   emailVerified DateTime?
   image         String?
-  role          String        @default("member") // superadmin, agentur, member, viewer
+  role          String        @default("member") // superadmin, agentur, compliance, legal, dev, member, viewer
   accounts      Account[]
   sessions      Session[]
   gscProperties GSCProperty[]
@@ -35,6 +35,8 @@ model User {
   taskAssignments TaskAssignee[] @relation("TaskAssignee") // Tasks die dem User zugewiesen sind
   editorialPlanCreated     EditorialPlanEntry[]    @relation("EditorialPlanCreator")
   editorialPlanAssignments EditorialPlanAssignee[] @relation("EditorialPlanAssignee")
+  generatedArticles GeneratedArticle[] @relation("ArticleCreator")
+  contentComments   ContentComment[]   @relation("ContentCommentAuthor")
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -522,6 +524,10 @@ model EditorialPlanEntry {
   funnel            String?                   // Funnel-Stufe: Upper-Funnel, Mid-Funnel, Lower-Funnel
   status            String                    @default("planned") // planned, in_progress, review, published
   dueDate           DateTime
+  contentPushed     Boolean                   @default(false) // Wurde an Content Generator übergeben?
+  contentPushedAt   DateTime?                 // Zeitpunkt der Übergabe
+  articleId         String?                   @unique // Verknüpfung zum generierten Artikel
+  article           GeneratedArticle?         @relation("EditorialPlanArticle", fields: [articleId], references: [id], onDelete: SetNull)
   creatorId         String
   creator           User                      @relation("EditorialPlanCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   assignees         EditorialPlanAssignee[]
@@ -561,6 +567,69 @@ model EditorialPlanAssignee {
   @@unique([entryId, userId])
   @@index([entryId])
   @@index([userId])
+}
+
+// Generierte Artikel - Content Generator
+model GeneratedArticle {
+  id              String           @id @default(cuid())
+  title           String
+  slug            String           @unique
+  funnelStage     String
+  category        String
+  targetAudience  String
+  htmlContent     String           @db.Text
+  wordCount       Int              @default(0)
+  reviewStatus    String           @default("draft") // draft, compliance_review, compliance_approved, legal_review, legal_approved, production_ready, published
+  complianceApprovedAt DateTime?
+  legalApprovedAt      DateTime?
+  editorialPlanEntry   EditorialPlanEntry? @relation("EditorialPlanArticle")
+  creatorId       String
+  creator         User             @relation("ArticleCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  comments        ContentComment[]
+  statusHistory   ArticleStatusHistory[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([creatorId])
+  @@index([funnelStage])
+  @@index([category])
+  @@index([reviewStatus])
+  @@index([createdAt])
+}
+
+// Inline-Kommentare für Content Review (Text-Markierung + Kommentar)
+model ContentComment {
+  id              String           @id @default(cuid())
+  articleId       String
+  article         GeneratedArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User             @relation("ContentCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  selectedText    String           @db.Text // Der markierte Text im Artikel
+  commentText     String           @db.Text // Der Kommentar/Änderungswunsch
+  role            String           // compliance, legal
+  resolved        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([articleId])
+  @@index([authorId])
+  @@index([resolved])
+}
+
+// Änderungsverlauf für Content-Review-Workflow
+model ArticleStatusHistory {
+  id              String           @id @default(cuid())
+  articleId       String
+  article         GeneratedArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  fromStatus      String
+  toStatus        String
+  changedByEmail  String
+  changedByName   String?
+  comment         String?          @db.Text
+  createdAt       DateTime         @default(now())
+
+  @@index([articleId])
+  @@index([createdAt])
 }
 
 // Changelog Zeiterfassung - Minuten pro Commit

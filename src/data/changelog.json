@@ -1,7 +1,172 @@
 {
-  "generatedAt": "2026-02-16T12:20:20.449Z",
-  "totalCommits": 86,
+  "generatedAt": "2026-03-10T16:30:14.729Z",
+  "totalCommits": 101,
   "commits": [
+    {
+      "hash": "c4826cc790688f0f02e6c94d67c7bd24d2e1a6c1",
+      "shortHash": "c4826cc",
+      "author": "Tasketeer",
+      "date": "2026-03-06 11:27:00 +0100",
+      "subject": "fix: Anführungszeichen aus Artikel-Titeln im Redaktionsplan entfernen",
+      "type": "fix",
+      "typeLabel": "Bugfix",
+      "scope": null,
+      "message": "Anführungszeichen aus Artikel-Titeln im Redaktionsplan entfernen"
+    },
+    {
+      "hash": "e3b4340a175953188dd56bd8fcb96056d6ce88f4",
+      "shortHash": "e3b4340",
+      "author": "Tasketeer",
+      "date": "2026-03-06 11:18:51 +0100",
+      "subject": "feat: Redaktionsplan um Ratgeber-Kategorien, Funnel und Import erweitern",
+      "type": "feat",
+      "typeLabel": "Feature",
+      "scope": null,
+      "message": "Redaktionsplan um Ratgeber-Kategorien, Funnel und Import erweitern"
+    },
+    {
+      "hash": "f8dbc5613b718e5b51984e35b77f91183e616cae",
+      "shortHash": "f8dbc56",
+      "author": "Tasketeer",
+      "date": "2026-03-05 12:29:19 +0100",
+      "subject": "fix: PieChart responsive machen – Legende unter das Chart, prozentuale Radien",
+      "type": "fix",
+      "typeLabel": "Bugfix",
+      "scope": null,
+      "message": "PieChart responsive machen – Legende unter das Chart, prozentuale Radien"
+    },
+    {
+      "hash": "d0998bc4c5b099689df4862bb509267820a8e77f",
+      "shortHash": "d0998bc",
+      "author": "Tasketeer",
+      "date": "2026-03-05 12:26:36 +0100",
+      "subject": "fix: Kommentarfeld im Kanban-Board vergrößern und resizebar machen",
+      "type": "fix",
+      "typeLabel": "Bugfix",
+      "scope": null,
+      "message": "Kommentarfeld im Kanban-Board vergrößern und resizebar machen"
+    },
+    {
+      "hash": "9164b5854aa858aac6f3b25b67f0bdf190f851a8",
+      "shortHash": "9164b58",
+      "author": "Tasketeer",
+      "date": "2026-03-03 14:14:11 +0100",
+      "subject": "chore: Seitentitel auf \"SEOdaten.com Dashboard\" umbenennen",
+      "type": "chore",
+      "typeLabel": "Wartung",
+      "scope": null,
+      "message": "Seitentitel auf \"SEOdaten.com Dashboard\" umbenennen"
+    },
+    {
+      "hash": "99894232ce7fdf3c664d6be17484c7a9f0860a6a",
+      "shortHash": "9989423",
+      "author": "Tasketeer",
+      "date": "2026-02-24 10:20:17 +0100",
+      "subject": "chore: Meta-Title auf \"Targobank SEO Dashboard\" ändern",
+      "type": "chore",
+      "typeLabel": "Wartung",
+      "scope": null,
+      "message": "Meta-Title auf \"Targobank SEO Dashboard\" ändern"
+    },
+    {
+      "hash": "6dfb4b1f9a8e47d822e13c00856c3cda451a847b",
+      "shortHash": "6dfb4b1",
+      "author": "Tasketeer",
+      "date": "2026-02-24 10:12:05 +0100",
+      "subject": "chore: Changelog-Seite und zugehörige API-Routen entfernen",
+      "type": "chore",
+      "typeLabel": "Wartung",
+      "scope": null,
+      "message": "Changelog-Seite und zugehörige API-Routen entfernen"
+    },
+    {
+      "hash": "e83418b8f7f7befe5cab5ddaf771e8e0a9e2df57",
+      "shortHash": "e83418b",
+      "author": "Tasketeer",
+      "date": "2026-02-23 15:16:57 +0100",
+      "subject": "fix: Auth-Cookies an internen fetch-content Aufruf im FAQ-Check weiterleiten",
+      "type": "fix",
+      "typeLabel": "Bugfix",
+      "scope": null,
+      "message": "Auth-Cookies an internen fetch-content Aufruf im FAQ-Check weiterleiten"
+    },
+    {
+      "hash": "84f347a1c1b66fe4b169380e9a44fd29eb76d341",
+      "shortHash": "84f347a",
+      "author": "Tasketeer",
+      "date": "2026-02-23 14:47:52 +0100",
+      "subject": "fix: BLOB2_READ_WRITE_TOKEN zurück auf BLOB_READ_WRITE_TOKEN umbenennen",
+      "type": "fix",
+      "typeLabel": "Bugfix",
+      "scope": null,
+      "message": "BLOB2_READ_WRITE_TOKEN zurück auf BLOB_READ_WRITE_TOKEN umbenennen"
+    },
+    {
+      "hash": "ae7a1be50c59e12509ea50c0300ba463488d3989",
+      "shortHash": "ae7a1be",
+      "author": "Tasketeer",
+      "date": "2026-02-23 14:26:41 +0100",
+      "subject": "feat: Kategorien auf Deutsch umstellen und Redaktionsplan-Seite hinzufügen",
+      "type": "feat",
+      "typeLabel": "Feature",
+      "scope": null,
+      "message": "Kategorien auf Deutsch umstellen und Redaktionsplan-Seite hinzufügen"
+    },
+    {
+      "hash": "159458e7280a1a3fd26a7470c23edf13c230e542",
+      "shortHash": "159458e",
+      "author": "Tasketeer",
+      "date": "2026-02-23 13:48:09 +0100",
+      "subject": "refactor: Rebranding von SME/UBS/Schweiz auf SEO Dashboard/TARGOBANK/Deutschland",
+      "type": "refactor",
+      "typeLabel": "Refactoring",
+      "scope": null,
+      "message": "Rebranding von SME/UBS/Schweiz auf SEO Dashboard/TARGOBANK/Deutschland"
+    },
+    {
+      "hash": "31d233ff5cdfddbff52b1f96b61e83302407076c",
+      "shortHash": "31d233f",
+      "author": "Tasketeer",
+      "date": "2026-02-23 13:15:59 +0100",
+      "subject": "fix: BLOB_READ_WRITE_TOKEN auf BLOB2_READ_WRITE_TOKEN umbenennen",
+      "type": "fix",
+      "typeLabel": "Bugfix",
+      "scope": null,
+      "message": "BLOB_READ_WRITE_TOKEN auf BLOB2_READ_WRITE_TOKEN umbenennen"
+    },
+    {
+      "hash": "aebfdcf92696d5e91a7836ebf0f2ed441952eb5b",
+      "shortHash": "aebfdcf",
+      "author": "smedash",
+      "date": "2026-02-16 13:46:38 +0100",
+      "subject": "fix(tickets): Auto-Scroll zur Ticket-Detail-Ansicht bei Auswahl",
+      "type": "fix",
+      "typeLabel": "Bugfix",
+      "scope": "tickets",
+      "message": "Auto-Scroll zur Ticket-Detail-Ansicht bei Auswahl"
+    },
+    {
+      "hash": "7686d053f2ca175bdfeca39af8cd5e7cfbce7c81",
+      "shortHash": "7686d05",
+      "author": "smedash",
+      "date": "2026-02-16 13:36:07 +0100",
+      "subject": "feat(content-analyzer): Info-Tooltip zur Lesbarkeits-Card hinzufügen",
+      "type": "feat",
+      "typeLabel": "Feature",
+      "scope": "content-analyzer",
+      "message": "Info-Tooltip zur Lesbarkeits-Card hinzufügen"
+    },
+    {
+      "hash": "6aaf8f9c71c90691261ad8312d49e44f44bd456a",
+      "shortHash": "6aaf8f9",
+      "author": "smedash",
+      "date": "2026-02-16 13:21:36 +0100",
+      "subject": "fix: 12-Monats-Filter durch 8-Monate ersetzen und Blob-Access korrigieren",
+      "type": "fix",
+      "typeLabel": "Bugfix",
+      "scope": null,
+      "message": "12-Monats-Filter durch 8-Monate ersetzen und Blob-Access korrigieren"
+    },
     {
       "hash": "c1d5b27d309acfb8af028332565130df9bd916fb",
       "shortHash": "c1d5b27",
@@ -950,7 +1115,182 @@
     }
   ],
   "groupedByDate": {
+    "2026-03-06": [
+      {
+        "hash": "c4826cc790688f0f02e6c94d67c7bd24d2e1a6c1",
+        "shortHash": "c4826cc",
+        "author": "Tasketeer",
+        "date": "2026-03-06 11:27:00 +0100",
+        "subject": "fix: Anführungszeichen aus Artikel-Titeln im Redaktionsplan entfernen",
+        "type": "fix",
+        "typeLabel": "Bugfix",
+        "scope": null,
+        "message": "Anführungszeichen aus Artikel-Titeln im Redaktionsplan entfernen"
+      },
+      {
+        "hash": "e3b4340a175953188dd56bd8fcb96056d6ce88f4",
+        "shortHash": "e3b4340",
+        "author": "Tasketeer",
+        "date": "2026-03-06 11:18:51 +0100",
+        "subject": "feat: Redaktionsplan um Ratgeber-Kategorien, Funnel und Import erweitern",
+        "type": "feat",
+        "typeLabel": "Feature",
+        "scope": null,
+        "message": "Redaktionsplan um Ratgeber-Kategorien, Funnel und Import erweitern"
+      }
+    ],
+    "2026-03-05": [
+      {
+        "hash": "f8dbc5613b718e5b51984e35b77f91183e616cae",
+        "shortHash": "f8dbc56",
+        "author": "Tasketeer",
+        "date": "2026-03-05 12:29:19 +0100",
+        "subject": "fix: PieChart responsive machen – Legende unter das Chart, prozentuale Radien",
+        "type": "fix",
+        "typeLabel": "Bugfix",
+        "scope": null,
+        "message": "PieChart responsive machen – Legende unter das Chart, prozentuale Radien"
+      },
+      {
+        "hash": "d0998bc4c5b099689df4862bb509267820a8e77f",
+        "shortHash": "d0998bc",
+        "author": "Tasketeer",
+        "date": "2026-03-05 12:26:36 +0100",
+        "subject": "fix: Kommentarfeld im Kanban-Board vergrößern und resizebar machen",
+        "type": "fix",
+        "typeLabel": "Bugfix",
+        "scope": null,
+        "message": "Kommentarfeld im Kanban-Board vergrößern und resizebar machen"
+      }
+    ],
+    "2026-03-03": [
+      {
+        "hash": "9164b5854aa858aac6f3b25b67f0bdf190f851a8",
+        "shortHash": "9164b58",
+        "author": "Tasketeer",
+        "date": "2026-03-03 14:14:11 +0100",
+        "subject": "chore: Seitentitel auf \"SEOdaten.com Dashboard\" umbenennen",
+        "type": "chore",
+        "typeLabel": "Wartung",
+        "scope": null,
+        "message": "Seitentitel auf \"SEOdaten.com Dashboard\" umbenennen"
+      }
+    ],
+    "2026-02-24": [
+      {
+        "hash": "99894232ce7fdf3c664d6be17484c7a9f0860a6a",
+        "shortHash": "9989423",
+        "author": "Tasketeer",
+        "date": "2026-02-24 10:20:17 +0100",
+        "subject": "chore: Meta-Title auf \"Targobank SEO Dashboard\" ändern",
+        "type": "chore",
+        "typeLabel": "Wartung",
+        "scope": null,
+        "message": "Meta-Title auf \"Targobank SEO Dashboard\" ändern"
+      },
+      {
+        "hash": "6dfb4b1f9a8e47d822e13c00856c3cda451a847b",
+        "shortHash": "6dfb4b1",
+        "author": "Tasketeer",
+        "date": "2026-02-24 10:12:05 +0100",
+        "subject": "chore: Changelog-Seite und zugehörige API-Routen entfernen",
+        "type": "chore",
+        "typeLabel": "Wartung",
+        "scope": null,
+        "message": "Changelog-Seite und zugehörige API-Routen entfernen"
+      }
+    ],
+    "2026-02-23": [
+      {
+        "hash": "e83418b8f7f7befe5cab5ddaf771e8e0a9e2df57",
+        "shortHash": "e83418b",
+        "author": "Tasketeer",
+        "date": "2026-02-23 15:16:57 +0100",
+        "subject": "fix: Auth-Cookies an internen fetch-content Aufruf im FAQ-Check weiterleiten",
+        "type": "fix",
+        "typeLabel": "Bugfix",
+        "scope": null,
+        "message": "Auth-Cookies an internen fetch-content Aufruf im FAQ-Check weiterleiten"
+      },
+      {
+        "hash": "84f347a1c1b66fe4b169380e9a44fd29eb76d341",
+        "shortHash": "84f347a",
+        "author": "Tasketeer",
+        "date": "2026-02-23 14:47:52 +0100",
+        "subject": "fix: BLOB2_READ_WRITE_TOKEN zurück auf BLOB_READ_WRITE_TOKEN umbenennen",
+        "type": "fix",
+        "typeLabel": "Bugfix",
+        "scope": null,
+        "message": "BLOB2_READ_WRITE_TOKEN zurück auf BLOB_READ_WRITE_TOKEN umbenennen"
+      },
+      {
+        "hash": "ae7a1be50c59e12509ea50c0300ba463488d3989",
+        "shortHash": "ae7a1be",
+        "author": "Tasketeer",
+        "date": "2026-02-23 14:26:41 +0100",
+        "subject": "feat: Kategorien auf Deutsch umstellen und Redaktionsplan-Seite hinzufügen",
+        "type": "feat",
+        "typeLabel": "Feature",
+        "scope": null,
+        "message": "Kategorien auf Deutsch umstellen und Redaktionsplan-Seite hinzufügen"
+      },
+      {
+        "hash": "159458e7280a1a3fd26a7470c23edf13c230e542",
+        "shortHash": "159458e",
+        "author": "Tasketeer",
+        "date": "2026-02-23 13:48:09 +0100",
+        "subject": "refactor: Rebranding von SME/UBS/Schweiz auf SEO Dashboard/TARGOBANK/Deutschland",
+        "type": "refactor",
+        "typeLabel": "Refactoring",
+        "scope": null,
+        "message": "Rebranding von SME/UBS/Schweiz auf SEO Dashboard/TARGOBANK/Deutschland"
+      },
+      {
+        "hash": "31d233ff5cdfddbff52b1f96b61e83302407076c",
+        "shortHash": "31d233f",
+        "author": "Tasketeer",
+        "date": "2026-02-23 13:15:59 +0100",
+        "subject": "fix: BLOB_READ_WRITE_TOKEN auf BLOB2_READ_WRITE_TOKEN umbenennen",
+        "type": "fix",
+        "typeLabel": "Bugfix",
+        "scope": null,
+        "message": "BLOB_READ_WRITE_TOKEN auf BLOB2_READ_WRITE_TOKEN umbenennen"
+      }
+    ],
     "2026-02-16": [
+      {
+        "hash": "aebfdcf92696d5e91a7836ebf0f2ed441952eb5b",
+        "shortHash": "aebfdcf",
+        "author": "smedash",
+        "date": "2026-02-16 13:46:38 +0100",
+        "subject": "fix(tickets): Auto-Scroll zur Ticket-Detail-Ansicht bei Auswahl",
+        "type": "fix",
+        "typeLabel": "Bugfix",
+        "scope": "tickets",
+        "message": "Auto-Scroll zur Ticket-Detail-Ansicht bei Auswahl"
+      },
+      {
+        "hash": "7686d053f2ca175bdfeca39af8cd5e7cfbce7c81",
+        "shortHash": "7686d05",
+        "author": "smedash",
+        "date": "2026-02-16 13:36:07 +0100",
+        "subject": "feat(content-analyzer): Info-Tooltip zur Lesbarkeits-Card hinzufügen",
+        "type": "feat",
+        "typeLabel": "Feature",
+        "scope": "content-analyzer",
+        "message": "Info-Tooltip zur Lesbarkeits-Card hinzufügen"
+      },
+      {
+        "hash": "6aaf8f9c71c90691261ad8312d49e44f44bd456a",
+        "shortHash": "6aaf8f9",
+        "author": "smedash",
+        "date": "2026-02-16 13:21:36 +0100",
+        "subject": "fix: 12-Monats-Filter durch 8-Monate ersetzen und Blob-Access korrigieren",
+        "type": "fix",
+        "typeLabel": "Bugfix",
+        "scope": null,
+        "message": "12-Monats-Filter durch 8-Monate ersetzen und Blob-Access korrigieren"
+      },
       {
         "hash": "c1d5b27d309acfb8af028332565130df9bd916fb",
         "shortHash": "c1d5b27",

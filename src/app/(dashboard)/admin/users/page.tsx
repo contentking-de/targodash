@@ -139,6 +139,12 @@ export default function AdminUsersPage() {
         return "bg-purple-500/20 text-purple-400 border-purple-500/30";
       case "agentur":
         return "bg-amber-500/20 text-amber-400 border-amber-500/30";
+      case "compliance":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      case "legal":
+        return "bg-pink-500/20 text-pink-400 border-pink-500/30";
+      case "dev":
+        return "bg-teal-500/20 text-teal-400 border-teal-500/30";
       case "member":
         return "bg-blue-500/20 text-blue-400 border-blue-500/30";
       case "viewer":
@@ -251,7 +257,9 @@ export default function AdminUsersPage() {
               >
                 <option value="viewer">Betrachter - Kann nur lesen</option>
                 <option value="member">Mitglied - Kann bearbeiten</option>
-                <option value="agentur">Agentur - Volle Rechte</option>
+                <option value="compliance">Compliance - Content-Review</option>
+                <option value="legal">Legal - Legal-Review</option>
+                <option value="dev">Dev - Production-Ready</option>
                 <option value="superadmin">Superadmin - Volle Rechte</option>
               </select>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -285,7 +293,7 @@ export default function AdminUsersPage() {
 
       {/* Rollen-Übersicht */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {(["superadmin", "agentur", "member", "viewer"] as Role[]).map((role) => {
+        {(["superadmin", "agentur", "compliance", "legal", "dev", "member", "viewer"] as Role[]).map((role) => {
           const count = users.filter((u) => u.role === role).length;
           return (
             <div
@@ -348,7 +356,9 @@ export default function AdminUsersPage() {
                     >
                       <option value="viewer">Betrachter</option>
                       <option value="member">Mitglied</option>
-                      <option value="agentur">Agentur</option>
+                      <option value="compliance">Compliance</option>
+                      <option value="legal">Legal</option>
+                      <option value="dev">Dev</option>
                       <option value="superadmin">Superadmin</option>
                     </select>
                   ) : (

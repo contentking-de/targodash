@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { getAuthenticatedBlobUrl } from "@/lib/blob-url";
 
 interface User {
@@ -19,6 +21,14 @@ interface EntryFile {
   createdAt: string;
 }
 
+interface LinkedArticle {
+  id: string;
+  reviewStatus: string;
+  title: string;
+  wordCount: number;
+  createdAt: string;
+}
+
 interface EditorialEntry {
   id: string;
   title: string;
@@ -29,6 +39,10 @@ interface EditorialEntry {
   funnel: string | null;
   status: string;
   dueDate: string;
+  contentPushed: boolean;
+  contentPushedAt: string | null;
+  articleId: string | null;
+  article: LinkedArticle | null;
   creatorId: string;
   creator: User;
   assignees: User[];
@@ -97,6 +111,46 @@ const RATGEBER_CATEGORY_BG_COLORS: Record<string, string> = {
   "Lexikon": "bg-teal-500",
   "Checklisten für Käufer und Inhaber": "bg-fuchsia-500",
 };
+
+const REVIEW_STATUS_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
+  draft: { label: "Entwurf", color: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400", icon: "pencil" },
+  compliance_review: { label: "Compliance", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300", icon: "clock" },
+  compliance_approved: { label: "Compliance OK", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300", icon: "check" },
+  legal_review: { label: "Legal", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300", icon: "clock" },
+  legal_approved: { label: "Legal OK", color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300", icon: "check" },
+  production_ready: { label: "Prod. Ready", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300", icon: "check" },
+  published: { label: "Published", color: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300", icon: "check" },
+};
+
+function ReviewStatusBadge({ article }: { article: LinkedArticle | null }) {
+  if (!article) return null;
+  const config = REVIEW_STATUS_CONFIG[article.reviewStatus] || REVIEW_STATUS_CONFIG.draft;
+  const isInReview = article.reviewStatus.includes("review");
+  const isDone = ["production_ready", "published"].includes(article.reviewStatus);
+  return (
+    <a
+      href="/content-check"
+      onClick={(e) => e.stopPropagation()}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${config.color} hover:opacity-80 transition-opacity`}
+      title={`Artikel-Status: ${config.label} – Klicken um Content Check zu öffnen`}
+    >
+      {isDone ? (
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ) : isInReview ? (
+        <svg className="w-3 h-3 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ) : (
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+      )}
+      {config.label}
+    </a>
+  );
+}
 
 function getStatusConfig(status: string) {
   return STATUS_OPTIONS.find((s) => s.value === status) || STATUS_OPTIONS[0];
@@ -203,6 +257,9 @@ function FileUploadArea({ onUpload }: { onUpload: (files: FileList) => Promise<v
 
 export default function RedaktionsplanPage() {
   const today = new Date();
+  const router = useRouter();
+  const { data: session } = useSession();
+  const isAgenturUser = session?.user?.role === "agentur";
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [entries, setEntries] = useState<EditorialEntry[]>([]);
@@ -408,6 +465,37 @@ export default function RedaktionsplanPage() {
       }
     } catch (error) {
       console.error("Error updating status:", error);
+    }
+  }
+
+  async function handlePushToContent(entry: EditorialEntry) {
+    try {
+      const res = await fetch(`/api/editorial-plan/${entry.id}/push-to-content`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        setEntries((prev) =>
+          prev.map((e) =>
+            e.id === entry.id
+              ? { ...e, contentPushed: true, contentPushedAt: new Date().toISOString(), status: e.status === "planned" ? "in_progress" : e.status }
+              : e
+          )
+        );
+        setShowModal(false);
+
+        const isLexikon = entry.ratgeberCategory === "Lexikon";
+        const contentType = isLexikon ? "lexikon" : "ratgeber";
+        const params = new URLSearchParams({
+          title: entry.title,
+          funnel: entry.funnel || "",
+          category: entry.ratgeberCategory || "",
+          contentType,
+          editorialPlanEntryId: entry.id,
+        });
+        router.push(`/content?${params.toString()}`);
+      }
+    } catch (error) {
+      console.error("Error pushing to content:", error);
     }
   }
 
@@ -651,8 +739,17 @@ export default function RedaktionsplanPage() {
                               openEditModal(entry);
                             }}
                             className={`w-full text-left px-1.5 py-0.5 rounded text-[11px] leading-tight truncate border-l-2 ${borderColor} ${statusCfg.color} hover:opacity-80 transition-opacity`}
-                            title={`${entry.title}${entry.ratgeberCategory ? ` · ${entry.ratgeberCategory}` : ""}${entry.funnel ? ` · ${entry.funnel}` : ""}`}
+                            title={`${entry.title}${entry.ratgeberCategory ? ` · ${entry.ratgeberCategory}` : ""}${entry.funnel ? ` · ${entry.funnel}` : ""}${entry.article ? ` · Artikel: ${REVIEW_STATUS_CONFIG[entry.article.reviewStatus]?.label || entry.article.reviewStatus}` : ""}`}
                           >
+                            {entry.article && (
+                              <span className={`inline-block w-1.5 h-1.5 rounded-full mr-0.5 align-middle ${
+                                ["production_ready", "published"].includes(entry.article.reviewStatus)
+                                  ? "bg-green-500"
+                                  : entry.article.reviewStatus.includes("review")
+                                    ? "bg-amber-500 animate-pulse"
+                                    : "bg-blue-500"
+                              }`} />
+                            )}
                             {entry.title}
                           </button>
                         );
@@ -731,9 +828,34 @@ export default function RedaktionsplanPage() {
                             {entry.assignees.map((a) => a.name || a.email).join(", ")}
                           </span>
                         )}
+                        {entry.contentPushed && !entry.article && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Content erstellt
+                          </span>
+                        )}
+                        <ReviewStatusBadge article={entry.article} />
                       </div>
                     </div>
-                    <select
+                    <div className="flex items-center gap-2">
+                      {isAgenturUser && !entry.contentPushed && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePushToContent(entry);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors whitespace-nowrap"
+                          title="Artikel im Content Generator erstellen"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                          </svg>
+                          Content erstellen
+                        </button>
+                      )}
+                      <select
                       value={entry.status}
                       onChange={(e) => {
                         e.stopPropagation();
@@ -746,6 +868,7 @@ export default function RedaktionsplanPage() {
                         <option key={s.value} value={s.value}>{s.label}</option>
                       ))}
                     </select>
+                    </div>
                   </div>
                 </div>
               );
@@ -844,6 +967,30 @@ export default function RedaktionsplanPage() {
                     <span className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${statusCfg.color}`}>
                       {statusCfg.label}
                     </span>
+                    {isAgenturUser && !entry.contentPushed && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePushToContent(entry);
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 rounded-lg transition-colors whitespace-nowrap"
+                        title="Artikel im Content Generator erstellen"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                        </svg>
+                        Content
+                      </button>
+                    )}
+                    {entry.contentPushed && !entry.article && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded whitespace-nowrap">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Content
+                      </span>
+                    )}
+                    <ReviewStatusBadge article={entry.article} />
                     <select
                       value={entry.status}
                       onChange={(e) => {
@@ -1089,7 +1236,7 @@ export default function RedaktionsplanPage() {
 
             {/* Footer */}
             <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <div>
+              <div className="flex items-center gap-2">
                 {editingEntry && (
                   <button
                     onClick={() => handleDelete(editingEntry.id)}
@@ -1097,6 +1244,43 @@ export default function RedaktionsplanPage() {
                   >
                     Löschen
                   </button>
+                )}
+                {editingEntry && isAgenturUser && (
+                  editingEntry.contentPushed ? (
+                    <div className="flex items-center gap-2">
+                      {editingEntry.article ? (
+                        <a
+                          href="/content-check"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Content Check
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          An Content übergeben
+                        </span>
+                      )}
+                      {editingEntry.article && (
+                        <ReviewStatusBadge article={editingEntry.article} />
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handlePushToContent(editingEntry)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+                      </svg>
+                      Content erstellen
+                    </button>
+                  )
                 )}
               </div>
               <div className="flex items-center gap-3">
