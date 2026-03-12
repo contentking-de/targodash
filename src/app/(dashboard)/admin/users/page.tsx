@@ -147,6 +147,8 @@ export default function AdminUsersPage() {
         return "bg-teal-500/20 text-teal-400 border-teal-500/30";
       case "produktmanagement":
         return "bg-cyan-500/20 text-cyan-400 border-cyan-500/30";
+      case "brand":
+        return "bg-rose-500/20 text-rose-400 border-rose-500/30";
       case "member":
         return "bg-blue-500/20 text-blue-400 border-blue-500/30";
       case "viewer":
@@ -260,6 +262,7 @@ export default function AdminUsersPage() {
                 <option value="viewer">Betrachter - Kann nur lesen</option>
                 <option value="member">Mitglied - Kann bearbeiten</option>
                 <option value="produktmanagement">ProduktManagement - Kann bearbeiten</option>
+                <option value="brand">Brand - Kann bearbeiten</option>
                 <option value="compliance">Compliance - Content-Review</option>
                 <option value="legal">Legal - Legal-Review</option>
                 <option value="dev">Dev - Production-Ready</option>
@@ -296,7 +299,7 @@ export default function AdminUsersPage() {
 
       {/* Rollen-Übersicht */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {(["superadmin", "agentur", "compliance", "legal", "dev", "produktmanagement", "member", "viewer"] as Role[]).map((role) => {
+        {(["superadmin", "agentur", "compliance", "legal", "dev", "produktmanagement", "brand", "member", "viewer"] as Role[]).map((role) => {
           const count = users.filter((u) => u.role === role).length;
           return (
             <div
@@ -360,6 +363,7 @@ export default function AdminUsersPage() {
                       <option value="viewer">Betrachter</option>
                       <option value="member">Mitglied</option>
                       <option value="produktmanagement">ProduktManagement</option>
+                      <option value="brand">Brand</option>
                       <option value="compliance">Compliance</option>
                       <option value="legal">Legal</option>
                       <option value="dev">Dev</option>

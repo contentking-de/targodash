@@ -18,7 +18,7 @@ model User {
   email         String        @unique
   emailVerified DateTime?
   image         String?
-  role          String        @default("member") // superadmin, agentur, compliance, legal, dev, member, viewer
+  role          String        @default("member") // superadmin, agentur, compliance, legal, dev, produktmanagement, brand, member, viewer
   accounts      Account[]
   sessions      Session[]
   gscProperties GSCProperty[]
@@ -579,9 +579,12 @@ model GeneratedArticle {
   targetAudience  String
   htmlContent     String           @db.Text
   wordCount       Int              @default(0)
-  reviewStatus    String           @default("draft") // draft, compliance_review, compliance_approved, legal_review, legal_approved, production_ready, published
+  reviewStatus    String           @default("draft") // draft, brand_review, brand_approved, compliance_review, compliance_approved, legal_review, legal_approved, production_ready, published
+  brandApprovedAt      DateTime?
   complianceApprovedAt DateTime?
   legalApprovedAt      DateTime?
+  eloxxImportedAt      DateTime?   // Zeitpunkt, wann in Eloxx importiert wurde
+  eloxxImportedBy      String?     // E-Mail/Name des Users, der den Import markiert hat
   editorialPlanEntry   EditorialPlanEntry? @relation("EditorialPlanArticle")
   creatorId       String
   creator         User             @relation("ArticleCreator", fields: [creatorId], references: [id], onDelete: Cascade)
@@ -606,7 +609,7 @@ model ContentComment {
   author          User             @relation("ContentCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   selectedText    String           @db.Text // Der markierte Text im Artikel
   commentText     String           @db.Text // Der Kommentar/Änderungswunsch
-  role            String           // compliance, legal
+  role            String           // compliance, legal, produktmanagement, brand
   resolved        Boolean          @default(false)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt

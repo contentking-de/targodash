@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     if (assigneeIds?.length > 0) {
       try {
         const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "";
-        const dashboardUrl = `${baseUrl}/tasks`;
+        const dashboardUrl = `${baseUrl}/tasks?taskId=${task.id}`;
         const creatorName = session.user.name || session.user.email || "Unbekannt";
 
         for (const assignee of task.assignees) {

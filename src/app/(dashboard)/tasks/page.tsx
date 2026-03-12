@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { canEdit } from "@/lib/rbac";
 import { getAuthenticatedBlobUrl } from "@/lib/blob-url";
@@ -1346,6 +1347,8 @@ function TimelineView({
 export default function TasksPage() {
   const { data: session } = useSession();
   const canEditData = canEdit(session?.user?.role);
+  const searchParams = useSearchParams();
+  const router = useRouter();
   
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<TaskUser[]>([]);
@@ -1396,6 +1399,17 @@ export default function TasksPage() {
     fetchTasks();
     fetchUsers();
   }, [fetchTasks, fetchUsers]);
+
+  useEffect(() => {
+    const taskId = searchParams.get("taskId");
+    if (taskId && tasks.length > 0 && !selectedTask) {
+      const task = tasks.find((t) => t.id === taskId);
+      if (task) {
+        setSelectedTask(task);
+        router.replace("/tasks", { scroll: false });
+      }
+    }
+  }, [searchParams, tasks, selectedTask, router]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = tasks.find((t) => t.id === event.active.id);
@@ -1614,7 +1628,7 @@ export default function TasksPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-4 items-end">
         <div>
           <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Priorität</label>
           <select
@@ -1655,8 +1669,25 @@ export default function TasksPage() {
             ))}
           </select>
         </div>
+        {session?.user?.id && (
+          <button
+            onClick={() =>
+              setFilterAssignee(filterAssignee === session.user.id ? "all" : session.user.id)
+            }
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+              filterAssignee === session.user.id
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Meine Tasks
+          </button>
+        )}
         <div className="flex-1"></div>
-        <div className="self-end">
+        <div>
           <span className="text-sm text-slate-500 dark:text-slate-400">
             {filteredTasks.length} von {tasks.length} Tasks
           </span>

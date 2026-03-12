@@ -1,7 +1,40 @@
 {
-  "generatedAt": "2026-03-10T16:30:14.729Z",
-  "totalCommits": 101,
+  "generatedAt": "2026-03-12T16:03:58.007Z",
+  "totalCommits": 104,
   "commits": [
+    {
+      "hash": "eca69a41a16e3e2d6679e51365dc8229d559b14a",
+      "shortHash": "eca69a4",
+      "author": "Tasketeer",
+      "date": "2026-03-11 19:08:46 +0100",
+      "subject": "fix: Redaktionsplan-Eintrag beim Löschen von Content zurücksetzen",
+      "type": "fix",
+      "typeLabel": "Bugfix",
+      "scope": null,
+      "message": "Redaktionsplan-Eintrag beim Löschen von Content zurücksetzen"
+    },
+    {
+      "hash": "9635696ffadee06f255606478012c038f27d55cd",
+      "shortHash": "9635696",
+      "author": "Tasketeer",
+      "date": "2026-03-11 18:09:20 +0100",
+      "subject": "feat: Rolle ProduktManagement und E-Mail-Benachrichtigung bei neuem Content",
+      "type": "feat",
+      "typeLabel": "Feature",
+      "scope": null,
+      "message": "Rolle ProduktManagement und E-Mail-Benachrichtigung bei neuem Content"
+    },
+    {
+      "hash": "44e64a378031bb0eb07d32c6118b1135209ad96e",
+      "shortHash": "44e64a3",
+      "author": "Tasketeer",
+      "date": "2026-03-11 13:47:09 +0100",
+      "subject": "feat: Content-Check Editor, Content-Generierung, RBAC und E-Mail-Benachrichtigungen",
+      "type": "feat",
+      "typeLabel": "Feature",
+      "scope": null,
+      "message": "Content-Check Editor, Content-Generierung, RBAC und E-Mail-Benachrichtigungen"
+    },
     {
       "hash": "c4826cc790688f0f02e6c94d67c7bd24d2e1a6c1",
       "shortHash": "c4826cc",
@@ -1115,6 +1148,41 @@
     }
   ],
   "groupedByDate": {
+    "2026-03-11": [
+      {
+        "hash": "eca69a41a16e3e2d6679e51365dc8229d559b14a",
+        "shortHash": "eca69a4",
+        "author": "Tasketeer",
+        "date": "2026-03-11 19:08:46 +0100",
+        "subject": "fix: Redaktionsplan-Eintrag beim Löschen von Content zurücksetzen",
+        "type": "fix",
+        "typeLabel": "Bugfix",
+        "scope": null,
+        "message": "Redaktionsplan-Eintrag beim Löschen von Content zurücksetzen"
+      },
+      {
+        "hash": "9635696ffadee06f255606478012c038f27d55cd",
+        "shortHash": "9635696",
+        "author": "Tasketeer",
+        "date": "2026-03-11 18:09:20 +0100",
+        "subject": "feat: Rolle ProduktManagement und E-Mail-Benachrichtigung bei neuem Content",
+        "type": "feat",
+        "typeLabel": "Feature",
+        "scope": null,
+        "message": "Rolle ProduktManagement und E-Mail-Benachrichtigung bei neuem Content"
+      },
+      {
+        "hash": "44e64a378031bb0eb07d32c6118b1135209ad96e",
+        "shortHash": "44e64a3",
+        "author": "Tasketeer",
+        "date": "2026-03-11 13:47:09 +0100",
+        "subject": "feat: Content-Check Editor, Content-Generierung, RBAC und E-Mail-Benachrichtigungen",
+        "type": "feat",
+        "typeLabel": "Feature",
+        "scope": null,
+        "message": "Content-Check Editor, Content-Generierung, RBAC und E-Mail-Benachrichtigungen"
+      }
+    ],
     "2026-03-06": [
       {
         "hash": "c4826cc790688f0f02e6c94d67c7bd24d2e1a6c1",

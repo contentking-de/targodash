@@ -51,9 +51,9 @@ export async function POST(
     );
   }
 
-  if (!["compliance", "legal"].includes(role)) {
+  if (!["compliance", "legal", "produktmanagement", "brand"].includes(role)) {
     return NextResponse.json(
-      { error: "role muss 'compliance' oder 'legal' sein" },
+      { error: "role muss 'compliance', 'legal', 'produktmanagement' oder 'brand' sein" },
       { status: 400 }
     );
   }

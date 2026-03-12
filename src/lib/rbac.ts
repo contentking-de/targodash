@@ -1,13 +1,14 @@
 // Role-Based Access Control (RBAC) Helper
 // Rollen: superadmin/agentur > compliance/legal/dev > member > viewer
 
-export type Role = "superadmin" | "agentur" | "compliance" | "legal" | "dev" | "produktmanagement" | "member" | "viewer";
+export type Role = "superadmin" | "agentur" | "compliance" | "legal" | "dev" | "produktmanagement" | "brand" | "member" | "viewer";
 
 // Rollen-Hierarchie (höhere Zahl = mehr Rechte)
 const ROLE_LEVELS: Record<Role, number> = {
   viewer: 1,
   member: 2,
   produktmanagement: 2,
+  brand: 2,
   compliance: 2,
   legal: 2,
   dev: 2,
@@ -56,6 +57,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   legal: "Legal",
   dev: "Dev",
   produktmanagement: "ProduktManagement",
+  brand: "Brand",
   member: "Mitglied",
   viewer: "Betrachter",
 };
@@ -68,6 +70,7 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   legal: "Legal-Prüfer - erhält Benachrichtigungen bei Legal-Reviews",
   dev: "Entwickler - erhält Benachrichtigungen wenn Content production-ready ist",
   produktmanagement: "ProduktManagement - kann alle Inhalte sehen und bearbeiten",
+  brand: "Brand - kann alle Inhalte sehen und bearbeiten",
   member: "Kann alle Inhalte sehen und bearbeiten",
   viewer: "Kann alle Inhalte nur ansehen",
 };

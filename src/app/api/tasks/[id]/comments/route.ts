@@ -117,7 +117,7 @@ export async function POST(
     if (assigneesToNotify.length > 0) {
       try {
         const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "";
-        const dashboardUrl = `${baseUrl}/tasks`;
+        const dashboardUrl = `${baseUrl}/tasks?taskId=${task.id}`;
         const authorName = session.user.name || session.user.email || "Jemand";
 
         for (const assignee of assigneesToNotify) {

@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
   // Notify all ProduktManagement users about new content
   try {
     const pmUsers = await prisma.user.findMany({
-      where: { role: "produktmanagement" },
+      where: { role: { in: ["produktmanagement", "brand"] } },
       select: { email: true },
     });
 

@@ -5,8 +5,10 @@ import { sendContentReviewNotification } from "@/lib/resend";
 import { isAgentur } from "@/lib/rbac";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  draft: ["compliance_review"],
-  compliance_review: ["compliance_approved", "draft"],
+  draft: ["brand_review"],
+  brand_review: ["brand_approved", "draft"],
+  brand_approved: ["compliance_review"],
+  compliance_review: ["compliance_approved", "brand_approved"],
   compliance_approved: ["legal_review"],
   legal_review: ["legal_approved", "compliance_approved"],
   legal_approved: ["production_ready"],
@@ -16,10 +18,12 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 
 // Welche Rolle bei welchem neuen Status benachrichtigt wird
 const STATUS_NOTIFY_ROLE: Record<string, string> = {
+  brand_review: "brand",
   compliance_review: "compliance",
   legal_review: "legal",
   production_ready: "dev",
   draft: "agentur",
+  brand_approved: "agentur",
   compliance_approved: "agentur",
 };
 
@@ -68,7 +72,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
-  const { reviewStatus, htmlContent } = body;
+  const { reviewStatus, htmlContent, eloxxImported } = body;
 
   const article = await prisma.generatedArticle.findUnique({ where: { id } });
   if (!article) {
@@ -107,6 +111,39 @@ export async function PATCH(
     return NextResponse.json(updated);
   }
 
+  // Eloxx-Import-Flag setzen/entfernen
+  if (eloxxImported !== undefined && !reviewStatus) {
+    if (article.reviewStatus !== "production_ready" && article.reviewStatus !== "published") {
+      return NextResponse.json(
+        { error: "Eloxx-Import kann nur im Status Production Ready oder Published gesetzt werden" },
+        { status: 400 }
+      );
+    }
+
+    const userName = session.user.name || session.user.email || "Unbekannt";
+    const updated = await prisma.generatedArticle.update({
+      where: { id },
+      data: {
+        eloxxImportedAt: eloxxImported ? new Date() : null,
+        eloxxImportedBy: eloxxImported ? userName : null,
+      },
+      include: {
+        creator: { select: { id: true, name: true, email: true } },
+        comments: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            author: { select: { id: true, name: true, email: true } },
+          },
+        },
+        statusHistory: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    return NextResponse.json(updated);
+  }
+
   // Status-Transition
   const allowedTransitions = VALID_TRANSITIONS[article.reviewStatus] || [];
   if (!allowedTransitions.includes(reviewStatus)) {
@@ -120,6 +157,9 @@ export async function PATCH(
 
   const updateData: Record<string, unknown> = { reviewStatus };
 
+  if (reviewStatus === "brand_approved") {
+    updateData.brandApprovedAt = new Date();
+  }
   if (reviewStatus === "compliance_approved") {
     updateData.complianceApprovedAt = new Date();
   }

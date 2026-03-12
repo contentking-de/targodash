@@ -553,25 +553,29 @@ export async function sendContentReviewNotification({
   dashboardUrl: string;
 }) {
   const statusLabels: Record<string, string> = {
+    brand_review: "Brand-Check",
     compliance_review: "Compliance Review",
     legal_review: "Legal Review",
     production_ready: "Production Ready",
     draft: "Zurück an Autor",
+    brand_approved: "Zurück an Brand",
     compliance_approved: "Zurück an Compliance",
   };
 
   const statusColors: Record<string, string> = {
+    brand_review: "#e11d48",
     compliance_review: "#d97706",
     legal_review: "#ea580c",
     production_ready: "#059669",
     draft: "#ef4444",
+    brand_approved: "#ef4444",
     compliance_approved: "#ef4444",
   };
 
   const statusLabel = statusLabels[newStatus] || newStatus;
   const statusColor = statusColors[newStatus] || "#3b82f6";
 
-  const isRejection = newStatus === "draft" || newStatus === "compliance_approved";
+  const isRejection = newStatus === "draft" || newStatus === "brand_approved" || newStatus === "compliance_approved";
   const subject = isRejection
     ? `Content zurückgewiesen: ${articleTitle}`
     : `Content-Review: ${articleTitle} – ${statusLabel}`;

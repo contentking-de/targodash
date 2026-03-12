@@ -23,7 +23,7 @@ interface ArticleComment {
   author: { id: string; name: string | null; email: string };
   selectedText: string;
   commentText: string;
-  role: "compliance" | "legal";
+  role: "compliance" | "legal" | "produktmanagement" | "brand";
   resolved: boolean;
   createdAt: string;
 }
@@ -40,6 +40,8 @@ interface Article {
   reviewStatus: string;
   complianceApprovedAt: string | null;
   legalApprovedAt: string | null;
+  eloxxImportedAt: string | null;
+  eloxxImportedBy: string | null;
   creator: { id: string; name: string | null; email: string };
   comments: ArticleComment[];
   statusHistory?: ArticleStatusHistory[];
@@ -51,6 +53,8 @@ interface Article {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   draft: { label: "Entwurf", color: "text-slate-700 dark:text-slate-300", bg: "bg-slate-100 dark:bg-slate-700" },
+  brand_review: { label: "Brand-Check", color: "text-rose-700 dark:text-rose-300", bg: "bg-rose-100 dark:bg-rose-900/40" },
+  brand_approved: { label: "Brand OK", color: "text-rose-700 dark:text-rose-300", bg: "bg-rose-100 dark:bg-rose-900/40" },
   compliance_review: { label: "Compliance Review", color: "text-amber-700 dark:text-amber-300", bg: "bg-amber-100 dark:bg-amber-900/40" },
   compliance_approved: { label: "Compliance OK", color: "text-blue-700 dark:text-blue-300", bg: "bg-blue-100 dark:bg-blue-900/40" },
   legal_review: { label: "Legal Review", color: "text-orange-700 dark:text-orange-300", bg: "bg-orange-100 dark:bg-orange-900/40" },
@@ -61,6 +65,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 
 const STATUS_FLOW = [
   "draft",
+  "brand_review",
+  "brand_approved",
   "compliance_review",
   "compliance_approved",
   "legal_review",
@@ -70,7 +76,9 @@ const STATUS_FLOW = [
 ];
 
 const NEXT_STATUS: Record<string, { status: string; label: string; color: string }> = {
-  draft: { status: "compliance_review", label: "An Compliance senden", color: "bg-amber-600 hover:bg-amber-700" },
+  draft: { status: "brand_review", label: "An Brand senden", color: "bg-rose-600 hover:bg-rose-700" },
+  brand_review: { status: "brand_approved", label: "Brand freigeben", color: "bg-rose-600 hover:bg-rose-700" },
+  brand_approved: { status: "compliance_review", label: "An Compliance senden", color: "bg-amber-600 hover:bg-amber-700" },
   compliance_review: { status: "compliance_approved", label: "Compliance freigeben", color: "bg-blue-600 hover:bg-blue-700" },
   compliance_approved: { status: "legal_review", label: "An Legal senden", color: "bg-orange-600 hover:bg-orange-700" },
   legal_review: { status: "legal_approved", label: "Legal freigeben", color: "bg-indigo-600 hover:bg-indigo-700" },
@@ -79,8 +87,23 @@ const NEXT_STATUS: Record<string, { status: string; label: string; color: string
 };
 
 const REJECT_STATUS: Record<string, { status: string; label: string }> = {
-  compliance_review: { status: "draft", label: "Zurück an Autor" },
+  brand_review: { status: "draft", label: "Zurück an Autor" },
+  compliance_review: { status: "brand_approved", label: "Zurück an Brand" },
   legal_review: { status: "compliance_approved", label: "Zurück an Compliance" },
+};
+
+const COMMENT_ROLE_LABELS: Record<string, string> = {
+  produktmanagement: "ProduktMgmt",
+  brand: "Brand",
+  compliance: "Compliance",
+  legal: "Legal",
+};
+
+const COMMENT_ROLE_STYLES: Record<string, string> = {
+  produktmanagement: "bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300",
+  brand: "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300",
+  compliance: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300",
+  legal: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
 };
 
 // --- Main Component ---
@@ -159,7 +182,7 @@ export default function ContentCheckPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Content Check</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Freigabe-Workflow: Compliance &rarr; Legal &rarr; Production Ready &rarr; Published
+          Freigabe-Workflow: Brand-Check &rarr; Compliance &rarr; Legal &rarr; Production Ready &rarr; Published
         </p>
       </div>
 
@@ -305,7 +328,25 @@ function ArticleReviewView({
 }) {
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [commentRole, setCommentRole] = useState<"compliance" | "legal">("compliance");
+  const [eloxxUpdating, setEloxxUpdating] = useState(false);
+
+  const getDefaultCommentRole = (status: string): "compliance" | "legal" | "produktmanagement" | "brand" => {
+    switch (status) {
+      case "brand_review":
+      case "brand_approved":
+        return "brand";
+      case "compliance_review":
+      case "compliance_approved":
+        return "compliance";
+      case "legal_review":
+      case "legal_approved":
+        return "legal";
+      default:
+        return "produktmanagement";
+    }
+  };
+
+  const [commentRole, setCommentRole] = useState<"compliance" | "legal" | "produktmanagement" | "brand">(getDefaultCommentRole(article.reviewStatus));
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [commentText, setCommentText] = useState("");
@@ -313,6 +354,10 @@ function ArticleReviewView({
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setCommentRole(getDefaultCommentRole(article.reviewStatus));
+  }, [article.reviewStatus]);
 
   const isDraft = article.reviewStatus === "draft";
   const [isEditing, setIsEditing] = useState(false);
@@ -405,6 +450,22 @@ function ArticleReviewView({
       // Ignore
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleEloxxToggle = async () => {
+    setEloxxUpdating(true);
+    try {
+      const res = await fetch(`/api/content-reviews/${article.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eloxxImported: !article.eloxxImportedAt }),
+      });
+      if (res.ok) onUpdate(await res.json());
+    } catch {
+      // Ignore
+    } finally {
+      setEloxxUpdating(false);
     }
   };
 
@@ -555,6 +616,8 @@ function ArticleReviewView({
 
     const STATUS_LABELS: Record<string, string> = {
       draft: "Entwurf",
+      brand_review: "Brand-Check",
+      brand_approved: "Brand freigegeben",
       compliance_review: "Compliance Review",
       compliance_approved: "Compliance freigegeben",
       legal_review: "Legal Review",
@@ -689,7 +752,8 @@ function ArticleReviewView({
         doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(100, 116, 139);
-        const roleLabel = comment.role === "compliance" ? "COMPLIANCE" : "LEGAL";
+        const roleLabelMap: Record<string, string> = { compliance: "COMPLIANCE", legal: "LEGAL", produktmanagement: "PRODUKTMANAGEMENT", brand: "BRAND" };
+        const roleLabel = roleLabelMap[comment.role] || comment.role.toUpperCase();
         const author = comment.author.name || comment.author.email;
         const date = new Date(comment.createdAt).toLocaleDateString("de-DE", {
           day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
@@ -914,7 +978,7 @@ function ArticleReviewView({
               {updating ? "Bitte warten..." : nextAction.label}
             </button>
           )}
-          {article.reviewStatus === "published" && (
+          {(article.reviewStatus === "production_ready" || article.reviewStatus === "published") && (
             <button
               onClick={handleDownloadPdf}
               className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-800 hover:bg-slate-900 dark:bg-slate-200 dark:hover:bg-white text-white dark:text-slate-900 transition-colors flex items-center gap-2"
@@ -924,6 +988,33 @@ function ArticleReviewView({
               </svg>
               Revisions-PDF
             </button>
+          )}
+          {(article.reviewStatus === "production_ready" || article.reviewStatus === "published") && (
+            <label
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-lg border transition-colors cursor-pointer select-none ${
+                article.eloxxImportedAt
+                  ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20"
+                  : "border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+              } ${eloxxUpdating ? "opacity-50 pointer-events-none" : ""}`}
+            >
+              <input
+                type="checkbox"
+                checked={!!article.eloxxImportedAt}
+                onChange={handleEloxxToggle}
+                disabled={eloxxUpdating}
+                className="rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+              />
+              <div className="flex flex-col">
+                <span className={`text-sm font-medium ${article.eloxxImportedAt ? "text-emerald-700 dark:text-emerald-300" : "text-slate-700 dark:text-slate-300"}`}>
+                  In Eloxx importiert
+                </span>
+                {article.eloxxImportedAt && (
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 leading-tight">
+                    {article.eloxxImportedBy} &middot; {new Date(article.eloxxImportedAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+              </div>
+            </label>
           )}
           {isAgentur && (
             <button
@@ -1081,27 +1172,25 @@ function ArticleReviewView({
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Kommentare ({article.comments.length})
               </h2>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setCommentRole("compliance")}
-                  className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                    commentRole === "compliance"
-                      ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-medium"
-                      : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  }`}
-                >
-                  Compliance
-                </button>
-                <button
-                  onClick={() => setCommentRole("legal")}
-                  className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                    commentRole === "legal"
-                      ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-medium"
-                      : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  }`}
-                >
-                  Legal
-                </button>
+              <div className="flex gap-1 flex-wrap">
+                {([
+                  { key: "produktmanagement", label: "ProduktMgmt", activeBg: "bg-cyan-100 dark:bg-cyan-900/40", activeText: "text-cyan-700 dark:text-cyan-300" },
+                  { key: "brand", label: "Brand", activeBg: "bg-rose-100 dark:bg-rose-900/40", activeText: "text-rose-700 dark:text-rose-300" },
+                  { key: "compliance", label: "Compliance", activeBg: "bg-amber-100 dark:bg-amber-900/40", activeText: "text-amber-700 dark:text-amber-300" },
+                  { key: "legal", label: "Legal", activeBg: "bg-purple-100 dark:bg-purple-900/40", activeText: "text-purple-700 dark:text-purple-300" },
+                ] as const).map((r) => (
+                  <button
+                    key={r.key}
+                    onClick={() => setCommentRole(r.key)}
+                    className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                      commentRole === r.key
+                        ? `${r.activeBg} ${r.activeText} font-medium`
+                        : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -1111,11 +1200,9 @@ function ArticleReviewView({
             <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 shrink-0">
               <div className="mb-2">
                 <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${
-                  commentRole === "compliance"
-                    ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
-                    : "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300"
+                  COMMENT_ROLE_STYLES[commentRole]
                 }`}>
-                  {commentRole === "compliance" ? "Compliance" : "Legal"}
+                  {COMMENT_ROLE_LABELS[commentRole]}
                 </span>
               </div>
               <div className="p-2 rounded bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 mb-2">
@@ -1281,9 +1368,8 @@ function CommentItem({
   onDelete: () => void;
   resolved?: boolean;
 }) {
-  const roleConfig = comment.role === "compliance"
-    ? { label: "Compliance", bg: "bg-amber-100 dark:bg-amber-900/40", color: "text-amber-700 dark:text-amber-300" }
-    : { label: "Legal", bg: "bg-purple-100 dark:bg-purple-900/40", color: "text-purple-700 dark:text-purple-300" };
+  const roleStyle = COMMENT_ROLE_STYLES[comment.role] || COMMENT_ROLE_STYLES.compliance;
+  const roleLabel = COMMENT_ROLE_LABELS[comment.role] || comment.role;
 
   return (
     <div
@@ -1294,8 +1380,8 @@ function CommentItem({
     >
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-2">
-          <span className={`inline-block px-1.5 py-0.5 text-[10px] font-medium rounded ${roleConfig.bg} ${roleConfig.color}`}>
-            {roleConfig.label}
+          <span className={`inline-block px-1.5 py-0.5 text-[10px] font-medium rounded ${roleStyle}`}>
+            {roleLabel}
           </span>
           <span className="text-[10px] text-slate-400 dark:text-slate-500">
             {comment.author.name || comment.author.email}

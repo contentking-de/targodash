@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validiere Rolle
-    const validRoles = ["superadmin", "compliance", "legal", "dev", "produktmanagement", "member", "viewer"];
+    const validRoles = ["superadmin", "compliance", "legal", "dev", "produktmanagement", "brand", "member", "viewer"];
     const userRole = validRoles.includes(role) ? role : "member";
 
     const user = await prisma.user.create({
