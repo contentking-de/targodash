@@ -86,12 +86,6 @@ const NEXT_STATUS: Record<string, { status: string; label: string; color: string
   production_ready: { status: "published", label: "Als Published markieren", color: "bg-green-600 hover:bg-green-700" },
 };
 
-const REJECT_STATUS: Record<string, { status: string; label: string }> = {
-  brand_review: { status: "draft", label: "Zurück an Autor" },
-  compliance_review: { status: "brand_approved", label: "Zurück an Brand" },
-  legal_review: { status: "compliance_approved", label: "Zurück an Compliance" },
-};
-
 const COMMENT_ROLE_LABELS: Record<string, string> = {
   produktmanagement: "ProduktMgmt",
   brand: "Brand",
@@ -329,6 +323,7 @@ function ArticleReviewView({
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [eloxxUpdating, setEloxxUpdating] = useState(false);
+  const [requestingRevision, setRequestingRevision] = useState(false);
 
   const getDefaultCommentRole = (status: string): "compliance" | "legal" | "produktmanagement" | "brand" => {
     switch (status) {
@@ -431,7 +426,6 @@ function ArticleReviewView({
 
   const statusConfig = STATUS_CONFIG[article.reviewStatus] || STATUS_CONFIG.draft;
   const nextAction = NEXT_STATUS[article.reviewStatus];
-  const rejectAction = REJECT_STATUS[article.reviewStatus];
   const currentStepIndex = STATUS_FLOW.indexOf(article.reviewStatus);
 
   const unresolvedComments = article.comments.filter((c) => !c.resolved);
@@ -450,6 +444,25 @@ function ArticleReviewView({
       // Ignore
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleRequestRevision = async () => {
+    setRequestingRevision(true);
+    try {
+      const res = await fetch(`/api/content-reviews/${article.id}/request-revision`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        alert("Überarbeitung wurde angefordert. Der Autor wurde per E-Mail benachrichtigt.");
+      } else {
+        const data = await res.json();
+        alert(data.error || "Fehler beim Anfordern der Überarbeitung");
+      }
+    } catch {
+      alert("Fehler beim Anfordern der Überarbeitung");
+    } finally {
+      setRequestingRevision(false);
     }
   };
 
@@ -960,13 +973,16 @@ function ArticleReviewView({
             {statusConfig.label}
           </span>
           <div className="flex-1" />
-          {rejectAction && (
+          {unresolvedComments.length > 0 && !isAgentur && article.reviewStatus !== "draft" && article.reviewStatus !== "published" && (
             <button
-              onClick={() => handleStatusChange(rejectAction.status)}
-              disabled={updating}
-              className="px-4 py-2 text-sm font-medium rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 transition-colors"
+              onClick={handleRequestRevision}
+              disabled={requestingRevision}
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50 transition-colors flex items-center gap-2"
             >
-              {rejectAction.label}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              {requestingRevision ? "Wird gesendet..." : `Überarbeitung anfordern (${unresolvedComments.length})`}
             </button>
           )}
           {nextAction && (

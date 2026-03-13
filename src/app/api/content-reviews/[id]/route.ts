@@ -6,11 +6,11 @@ import { isAgentur } from "@/lib/rbac";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   draft: ["brand_review"],
-  brand_review: ["brand_approved", "draft"],
+  brand_review: ["brand_approved"],
   brand_approved: ["compliance_review"],
-  compliance_review: ["compliance_approved", "brand_approved"],
+  compliance_review: ["compliance_approved"],
   compliance_approved: ["legal_review"],
-  legal_review: ["legal_approved", "compliance_approved"],
+  legal_review: ["legal_approved"],
   legal_approved: ["production_ready"],
   production_ready: ["published"],
   published: [],
@@ -22,9 +22,6 @@ const STATUS_NOTIFY_ROLE: Record<string, string> = {
   compliance_review: "compliance",
   legal_review: "legal",
   production_ready: "dev",
-  draft: "agentur",
-  brand_approved: "agentur",
-  compliance_approved: "agentur",
 };
 
 export async function GET(
