@@ -12,9 +12,29 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
     include: {
       creator: { select: { id: true, name: true, email: true } },
-      _count: { select: { comments: true } },
+      _count: {
+        select: {
+          comments: true,
+        },
+      },
     },
   });
 
-  return NextResponse.json(articles);
+  const articlesWithCommentCounts = await Promise.all(
+    articles.map(async (article) => {
+      const unresolvedCount = await prisma.contentComment.count({
+        where: { articleId: article.id, resolved: false },
+      });
+      return {
+        ...article,
+        _count: {
+          ...article._count,
+          unresolvedComments: unresolvedCount,
+          resolvedComments: article._count.comments - unresolvedCount,
+        },
+      };
+    })
+  );
+
+  return NextResponse.json(articlesWithCommentCounts);
 }

@@ -45,7 +45,7 @@ interface Article {
   creator: { id: string; name: string | null; email: string };
   comments: ArticleComment[];
   statusHistory?: ArticleStatusHistory[];
-  _count?: { comments: number };
+  _count?: { comments: number; unresolvedComments: number; resolvedComments: number };
   createdAt: string;
 }
 
@@ -108,6 +108,7 @@ export default function ContentCheckPage() {
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [commentFilter, setCommentFilter] = useState<string>("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const userRole = session?.user?.role;
@@ -148,9 +149,18 @@ export default function ContentCheckPage() {
     if (res.ok) setSelectedArticle(await res.json());
   };
 
-  const filteredArticles = filterStatus === "all"
-    ? articles
-    : articles.filter((a) => a.reviewStatus === filterStatus);
+  const filteredArticles = articles
+    .filter((a) => filterStatus === "all" || a.reviewStatus === filterStatus)
+    .filter((a) => {
+      if (commentFilter === "all") return true;
+      const total = a._count?.comments ?? 0;
+      const unresolved = a._count?.unresolvedComments ?? 0;
+      const resolved = a._count?.resolvedComments ?? 0;
+      if (commentFilter === "none") return total === 0;
+      if (commentFilter === "open") return unresolved > 0;
+      if (commentFilter === "resolved") return resolved > 0 && unresolved === 0;
+      return true;
+    });
 
   if (selectedArticle) {
     return (
@@ -180,36 +190,52 @@ export default function ContentCheckPage() {
         </p>
       </div>
 
-      {/* Status-Filter Tabs */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setFilterStatus("all")}
-          className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-            filterStatus === "all"
-              ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-              : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
-          }`}
+      {/* Filter */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Status-Filter Tabs */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFilterStatus("all")}
+            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+              filterStatus === "all"
+                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
+            }`}
+          >
+            Alle ({articles.length})
+          </button>
+          {STATUS_FLOW.map((status) => {
+            const config = STATUS_CONFIG[status];
+            const count = articles.filter((a) => a.reviewStatus === status).length;
+            if (count === 0 && filterStatus !== status) return null;
+            return (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                  filterStatus === status
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                    : `${config.bg} ${config.color} hover:opacity-80`
+                }`}
+              >
+                {config.label} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Kommentar-Filter */}
+        <div className="h-5 w-px bg-slate-300 dark:bg-slate-600 hidden sm:block" />
+        <select
+          value={commentFilter}
+          onChange={(e) => setCommentFilter(e.target.value)}
+          className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
         >
-          Alle ({articles.length})
-        </button>
-        {STATUS_FLOW.map((status) => {
-          const config = STATUS_CONFIG[status];
-          const count = articles.filter((a) => a.reviewStatus === status).length;
-          if (count === 0 && filterStatus !== status) return null;
-          return (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-                filterStatus === status
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                  : `${config.bg} ${config.color} hover:opacity-80`
-              }`}
-            >
-              {config.label} ({count})
-            </button>
-          );
-        })}
+          <option value="all">Alle Kommentare</option>
+          <option value="none">Ohne Kommentare</option>
+          <option value="open">Offene Kommentare</option>
+          <option value="resolved">Nur erledigte Kommentare</option>
+        </select>
       </div>
 
       {/* Artikel-Liste */}
@@ -233,6 +259,8 @@ export default function ContentCheckPage() {
             {filteredArticles.map((article) => {
               const statusConfig = STATUS_CONFIG[article.reviewStatus] || STATUS_CONFIG.draft;
               const commentCount = article._count?.comments ?? 0;
+              const unresolvedCount = article._count?.unresolvedComments ?? 0;
+              const resolvedCount = article._count?.resolvedComments ?? 0;
               return (
                 <div
                   key={article.id}
@@ -260,11 +288,20 @@ export default function ContentCheckPage() {
                           {article.wordCount} Wörter
                         </span>
                         {commentCount > 0 && (
-                          <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <span className="inline-flex items-center gap-1.5 text-xs">
+                            <svg className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                             </svg>
-                            {commentCount}
+                            {unresolvedCount > 0 && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium">
+                                {unresolvedCount} offen
+                              </span>
+                            )}
+                            {resolvedCount > 0 && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium">
+                                {resolvedCount} erledigt
+                              </span>
+                            )}
                           </span>
                         )}
                       </div>
