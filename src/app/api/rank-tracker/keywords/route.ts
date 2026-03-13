@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validiere Kategorie
-    const validCategories = ["Konto & Karten", "Kredit & Finanzierung", "Sparen & Investieren", "Schutz & Vorsorge"];
+    const validCategories = ["Konto & Karten", "Kredit & Finanzierung", "Sparen & Investieren", "Schutz & Vorsorge", "Baufinanzierung"];
     if (category && !validCategories.includes(category)) {
       return NextResponse.json(
         { error: "Ungültige Kategorie" },

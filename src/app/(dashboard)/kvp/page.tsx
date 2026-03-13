@@ -91,6 +91,7 @@ const KEYWORD_CATEGORIES = [
   "Kredit & Finanzierung",
   "Sparen & Investieren",
   "Schutz & Vorsorge",
+  "Baufinanzierung",
 ] as const;
 
 interface Ranking {

@@ -10,6 +10,7 @@ const KEYWORD_CATEGORIES = [
   "Kredit & Finanzierung",
   "Sparen & Investieren",
   "Schutz & Vorsorge",
+  "Baufinanzierung",
 ] as const;
 
 // Zeitraum-Presets

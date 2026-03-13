@@ -79,7 +79,7 @@ export async function PATCH(
 
     // Validiere Kategorie falls angegeben
     if (category) {
-      const validCategories = ["Konto & Karten", "Kredit & Finanzierung", "Sparen & Investieren", "Schutz & Vorsorge"];
+      const validCategories = ["Konto & Karten", "Kredit & Finanzierung", "Sparen & Investieren", "Schutz & Vorsorge", "Baufinanzierung"];
       if (!validCategories.includes(category)) {
         return NextResponse.json(
           { error: "Ungültige Kategorie" },

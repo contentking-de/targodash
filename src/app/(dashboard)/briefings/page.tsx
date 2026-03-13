@@ -13,6 +13,7 @@ const KEYWORD_CATEGORIES = [
   "Kredit & Finanzierung",
   "Sparen & Investieren",
   "Schutz & Vorsorge",
+  "Baufinanzierung",
 ] as const;
 
 interface Briefing {
@@ -86,6 +87,7 @@ const TIMELINE_CATEGORY_COLORS: Record<string, { bg: string; border: string; tex
   "Kredit & Finanzierung": { bg: "bg-green-50 dark:bg-green-900/20", border: "border-l-green-500", text: "text-green-700 dark:text-green-300", bar: "bg-green-400/80 dark:bg-green-500/60" },
   "Sparen & Investieren": { bg: "bg-purple-50 dark:bg-purple-900/20", border: "border-l-purple-500", text: "text-purple-700 dark:text-purple-300", bar: "bg-purple-400/80 dark:bg-purple-500/60" },
   "Schutz & Vorsorge": { bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-l-orange-500", text: "text-orange-700 dark:text-orange-300", bar: "bg-orange-400/80 dark:bg-orange-500/60" },
+  "Baufinanzierung": { bg: "bg-teal-50 dark:bg-teal-900/20", border: "border-l-teal-500", text: "text-teal-700 dark:text-teal-300", bar: "bg-teal-400/80 dark:bg-teal-500/60" },
 };
 
 const DEFAULT_CATEGORY_COLORS = { bg: "bg-slate-50 dark:bg-slate-800/50", border: "border-l-slate-400", text: "text-slate-700 dark:text-slate-300", bar: "bg-slate-400/80 dark:bg-slate-500/60" };

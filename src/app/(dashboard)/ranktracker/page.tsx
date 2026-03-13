@@ -38,6 +38,7 @@ const KEYWORD_CATEGORIES = [
   "Kredit & Finanzierung",
   "Sparen & Investieren",
   "Schutz & Vorsorge",
+  "Baufinanzierung",
 ] as const;
 
 interface Tracker {
@@ -141,6 +142,27 @@ export default function RankTrackerPage() {
     } catch (error) {
       console.error("Error adding keyword:", error);
       alert("Fehler beim Hinzufügen des Keywords");
+    }
+  }
+
+  async function handleUpdateCategory(id: string, category: string) {
+    try {
+      const response = await fetch(`/api/rank-tracker/keywords/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: category || null }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || "Fehler beim Ändern der Kategorie");
+        return;
+      }
+
+      await fetchTracker();
+    } catch (error) {
+      console.error("Error updating category:", error);
+      alert("Fehler beim Ändern der Kategorie");
     }
   }
 
@@ -701,11 +723,27 @@ export default function RankTrackerPage() {
                   key: "category",
                   header: "Kategorie",
                   sortable: true,
-                  render: (value) => {
-                    if (!value) {
-                      return <span className="text-slate-500 dark:text-slate-500">-</span>;
+                  render: (value, row) => {
+                    if (!canEditData) {
+                      if (!value) {
+                        return <span className="text-slate-500 dark:text-slate-500">-</span>;
+                      }
+                      return <span className="text-slate-700 dark:text-slate-300">{value as string}</span>;
                     }
-                    return <span className="text-slate-700 dark:text-slate-300">{value as string}</span>;
+                    return (
+                      <select
+                        value={(value as string) || ""}
+                        onChange={(e) => handleUpdateCategory(row.id as string, e.target.value)}
+                        className="px-2 py-1 bg-transparent border border-slate-200 dark:border-slate-600 rounded text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                      >
+                        <option value="">Keine</option>
+                        {KEYWORD_CATEGORIES.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    );
                   },
                 },
                 {

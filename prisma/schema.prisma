@@ -207,7 +207,7 @@ model RankTrackerKeyword {
   trackerId         String
   tracker           RankTracker          @relation(fields: [trackerId], references: [id], onDelete: Cascade)
   keyword           String
-  category          String? // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge
+  category          String? // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge, Baufinanzierung
   targetUrl         String? // Optional: URL für die das Keyword getrackt werden soll
   searchVolume      Int? // Monatliches Suchvolumen von DataForSEO
   searchVolumeUpdatedAt DateTime? // Zeitpunkt der letzten Suchvolumen-Aktualisierung
@@ -241,7 +241,7 @@ model KVPUrl {
   user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   url          String                @db.Text
   focusKeyword String                // Fokuskeyword für die URL
-  category     String?               // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge
+  category     String?               // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge, Baufinanzierung
   comment      String?               @db.Text // Kommentarfeld (deprecated, wird durch KVPComment ersetzt)
   subkeywords  KVPSubkeyword[]
   comments     KVPComment[]
@@ -384,7 +384,7 @@ model Briefing {
   // Briefing-Typ (Vorlage)
   briefingType      String   @default("new_content") // "new_content" | "edit_content" | "lexicon"
   
-  // Kategorie - gleiche wie bei KVP (Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge)
+  // Kategorie - gleiche wie bei KVP (Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge, Baufinanzierung)
   category          String?  // Kategorie für bessere Zuordnung und Auswertung
   
   // Grunddaten
@@ -457,7 +457,7 @@ model Task {
   priority    String         @default("medium") // low, medium, high, urgent
   order       Int            @default(0) // Reihenfolge innerhalb der Spalte
   dueDate     DateTime?
-  category    String?        // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge
+  category    String?        // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge, Baufinanzierung
   labels      String[]       // Zusätzliche Labels/Tags
   creatorId   String
   creator     User           @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
@@ -534,7 +534,7 @@ model EditorialPlanEntry {
   title             String
   description       String?                   @db.Text
   url               String?                   @db.Text
-  category          String?                   // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge
+  category          String?                   // Kategorie: Konto & Karten, Kredit & Finanzierung, Sparen & Investieren, Schutz & Vorsorge, Baufinanzierung
   ratgeberCategory  String?                   // Ratgeber-Kategorie: Erstfinanzierung, Kapitalanlage, Immobilie, etc.
   funnel            String?                   // Funnel-Stufe: Upper-Funnel, Mid-Funnel, Lower-Funnel
   status            String                    @default("planned") // planned, in_progress, review, published

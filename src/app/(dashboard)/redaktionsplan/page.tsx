@@ -56,6 +56,7 @@ const CATEGORIES = [
   "Kredit & Finanzierung",
   "Sparen & Investieren",
   "Schutz & Vorsorge",
+  "Baufinanzierung",
 ];
 
 const RATGEBER_CATEGORIES = [
@@ -88,6 +89,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Kredit & Finanzierung": "border-l-green-500",
   "Sparen & Investieren": "border-l-purple-500",
   "Schutz & Vorsorge": "border-l-orange-500",
+  "Baufinanzierung": "border-l-teal-500",
 };
 
 const RATGEBER_CATEGORY_COLORS: Record<string, string> = {

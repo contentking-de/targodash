@@ -109,6 +109,7 @@ const CATEGORIES = [
   "Kredit & Finanzierung",
   "Sparen & Investieren",
   "Schutz & Vorsorge",
+  "Baufinanzierung",
 ];
 
 // Kategorie-Farben für Timeline
@@ -117,6 +118,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string
   "Kredit & Finanzierung": { bg: "bg-green-100 dark:bg-green-900/30", border: "border-green-500", text: "text-green-700 dark:text-green-300" },
   "Sparen & Investieren": { bg: "bg-purple-100 dark:bg-purple-900/30", border: "border-purple-500", text: "text-purple-700 dark:text-purple-300" },
   "Schutz & Vorsorge": { bg: "bg-orange-100 dark:bg-orange-900/30", border: "border-orange-500", text: "text-orange-700 dark:text-orange-300" },
+  "Baufinanzierung": { bg: "bg-teal-100 dark:bg-teal-900/30", border: "border-teal-500", text: "text-teal-700 dark:text-teal-300" },
 };
 
 // Hilfsfunktionen für Dateien
