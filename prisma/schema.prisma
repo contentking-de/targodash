@@ -490,14 +490,28 @@ model TaskAssignee {
 
 // Task Kommentare
 model TaskComment {
-  id        String   @id @default(cuid())
+  id        String                @id @default(cuid())
   taskId    String
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task      Task                  @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId    String
-  text      String   @db.Text
-  createdAt DateTime @default(now())
+  text      String                @db.Text
+  reactions TaskCommentReaction[]
+  createdAt DateTime              @default(now())
 
   @@index([taskId])
+}
+
+// Task Kommentar Reactions (Slack-Style Emoji Reactions)
+model TaskCommentReaction {
+  id        String      @id @default(cuid())
+  commentId String
+  comment   TaskComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  emoji     String
+  createdAt DateTime    @default(now())
+
+  @@unique([commentId, userId, emoji])
+  @@index([commentId])
 }
 
 // Task Dateien - Hochgeladene Dateien via Vercel Blob

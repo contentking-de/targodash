@@ -36,12 +36,22 @@ interface TaskCommentUser {
   email: string;
 }
 
+interface TaskCommentReaction {
+  id: string;
+  commentId: string;
+  userId: string;
+  emoji: string;
+  user?: TaskCommentUser;
+  createdAt: string;
+}
+
 interface TaskComment {
   id: string;
   text: string;
   userId: string;
   createdAt: string;
   user?: TaskCommentUser;
+  reactions?: TaskCommentReaction[];
 }
 
 interface TaskFile {
@@ -427,6 +437,7 @@ function TaskDetailModal({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState(task);
+  const { data: session } = useSession();
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>(
     task.assignees?.map((a) => a.id) || []
   );
@@ -481,6 +492,31 @@ function TaskDetailModal({
     } finally {
       setIsAddingComment(false);
     }
+  };
+
+  const QUICK_EMOJIS = ["👍", "❤️", "😄", "🎉", "🚀", "👀", "💯", "🙏"];
+  const [openEmojiPickerFor, setOpenEmojiPickerFor] = useState<string | null>(null);
+
+  const handleToggleReaction = async (commentId: string, emoji: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/comments/${commentId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLocalComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId ? { ...c, reactions: data.reactions } : c
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling reaction:", error);
+    }
+    setOpenEmojiPickerFor(null);
   };
 
   const handleUploadFiles = async (files: FileList) => {
@@ -801,8 +837,21 @@ function TaskDetailModal({
             {/* Existing Comments */}
             {localComments.length > 0 && (
               <div className="space-y-3 mb-4">
-                {localComments.map((comment) => (
-                  <div key={comment.id} className="bg-slate-100 dark:bg-slate-900 rounded-lg p-3">
+                {localComments.map((comment) => {
+                  const reactionGroups = new Map<string, { emoji: string; users: { id: string; name: string | null; email: string }[]; count: number }>();
+                  (comment.reactions || []).forEach((r) => {
+                    const existing = reactionGroups.get(r.emoji);
+                    const user = r.user || { id: r.userId, name: null, email: "Unbekannt" };
+                    if (existing) {
+                      existing.users.push(user);
+                      existing.count++;
+                    } else {
+                      reactionGroups.set(r.emoji, { emoji: r.emoji, users: [user], count: 1 });
+                    }
+                  });
+
+                  return (
+                  <div key={comment.id} className="bg-slate-100 dark:bg-slate-900 rounded-lg p-3 group/comment">
                     <div className="flex items-start gap-2">
                       <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
                         {(comment.user?.name || comment.user?.email || "?").charAt(0).toUpperCase()}
@@ -815,14 +864,75 @@ function TaskDetailModal({
                           <span className="text-xs text-slate-500 dark:text-slate-500">
                             {formatDate(comment.createdAt)}
                           </span>
+                          {/* Quick reaction button */}
+                          <div className="relative ml-auto">
+                            <button
+                              onClick={() => setOpenEmojiPickerFor(openEmojiPickerFor === comment.id ? null : comment.id)}
+                              className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 opacity-0 group-hover/comment:opacity-100 transition-all"
+                              title="Reaktion hinzufügen"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
+                            {openEmojiPickerFor === comment.id && (
+                              <>
+                                <div className="fixed inset-0 z-10" onClick={() => setOpenEmojiPickerFor(null)} />
+                                <div className="absolute right-0 top-8 z-20 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-2 flex gap-1">
+                                  {QUICK_EMOJIS.map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      onClick={() => handleToggleReaction(comment.id, emoji)}
+                                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-lg transition-colors hover:scale-110"
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                         <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                           {comment.text}
                         </p>
+                        {/* Reactions */}
+                        {reactionGroups.size > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                            {Array.from(reactionGroups.values()).map((group) => {
+                              const hasReacted = group.users.some((u) => u.id === session?.user?.id);
+                              return (
+                                <button
+                                  key={group.emoji}
+                                  onClick={() => handleToggleReaction(comment.id, group.emoji)}
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all hover:scale-105 ${
+                                    hasReacted
+                                      ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-300 dark:ring-blue-700"
+                                      : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700"
+                                  }`}
+                                  title={group.users.map((u) => u.name || u.email).join(", ")}
+                                >
+                                  <span className="text-sm">{group.emoji}</span>
+                                  <span>{group.count}</span>
+                                </button>
+                              );
+                            })}
+                            <button
+                              onClick={() => setOpenEmojiPickerFor(openEmojiPickerFor === comment.id ? null : comment.id)}
+                              className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                              title="Reaktion hinzufügen"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

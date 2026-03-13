@@ -23,12 +23,18 @@ export async function GET(
         task: {
           select: { id: true, title: true },
         },
+        reactions: {
+          orderBy: { createdAt: "asc" },
+        },
       },
       orderBy: { createdAt: "asc" },
     });
 
     // User-Daten separat laden (da kein direkter Bezug im Schema)
-    const userIds = [...new Set(comments.map((c) => c.userId))];
+    const userIds = [...new Set([
+      ...comments.map((c) => c.userId),
+      ...comments.flatMap((c) => c.reactions.map((r) => r.userId)),
+    ])];
     const users = await prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, name: true, email: true },
@@ -39,6 +45,10 @@ export async function GET(
     const commentsWithUsers = comments.map((comment) => ({
       ...comment,
       user: userMap.get(comment.userId) || { id: comment.userId, name: null, email: "Unbekannt" },
+      reactions: comment.reactions.map((r) => ({
+        ...r,
+        user: userMap.get(r.userId) || { id: r.userId, name: null, email: "Unbekannt" },
+      })),
     }));
 
     return NextResponse.json({ comments: commentsWithUsers });
