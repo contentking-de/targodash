@@ -690,6 +690,63 @@ export async function sendNewContentNotification({
   return data;
 }
 
+export async function sendTaskMentionNotification({
+  to,
+  taskTitle,
+  commentText,
+  authorName,
+  dashboardUrl,
+}: {
+  to: string;
+  taskTitle: string;
+  commentText: string;
+  authorName: string;
+  dashboardUrl: string;
+}) {
+  const truncatedComment = commentText.length > 300
+    ? commentText.substring(0, 300) + "..."
+    : commentText;
+
+  const { data, error } = await resend.emails.send({
+    from: EMAIL_FROM,
+    to: to,
+    subject: `${authorName} hat dich erwähnt: ${taskTitle}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <h1 style="color: #18181b; font-size: 24px; margin: 0 0 16px 0;">Du wurdest erwähnt</h1>
+            <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+              <strong>${authorName}</strong> hat dich in einem Kommentar zum Task <strong>${taskTitle}</strong> erwähnt:
+            </p>
+            <div style="background-color: #f4f4f5; border-radius: 8px; padding: 16px; margin-bottom: 24px; border-left: 4px solid #8b5cf6;">
+              <p style="color: #52525b; font-size: 14px; margin: 0; white-space: pre-wrap;">${truncatedComment}</p>
+            </div>
+            <a href="${dashboardUrl}" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+              Task ansehen
+            </a>
+            <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0;">
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
+            </p>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+
+  if (error) {
+    console.error("Failed to send task mention notification email:", error);
+    throw error;
+  }
+
+  return data;
+}
+
 export async function sendWelcomeEmail({
   to,
   invitedBy,

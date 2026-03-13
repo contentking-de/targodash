@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { canEdit } from "@/lib/rbac";
@@ -448,6 +448,14 @@ function TaskDetailModal({
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [localComments, setLocalComments] = useState<TaskComment[]>(task.comments || []);
 
+  // Mention states
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState("");
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
+  const [mentionDropdownPos, setMentionDropdownPos] = useState<{ top: number; left: number } | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   // File states
   const [localFiles, setLocalFiles] = useState<TaskFile[]>(task.files || []);
 
@@ -478,7 +486,7 @@ function TaskDetailModal({
       const response = await fetch(`/api/tasks/${task.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: newComment.trim() }),
+        body: JSON.stringify({ text: newComment.trim(), mentionedUserIds }),
       });
 
       if (response.ok) {
@@ -486,6 +494,7 @@ function TaskDetailModal({
         setLocalComments((prev) => [...prev, data.comment]);
         onCommentAdded(task.id, data.comment);
         setNewComment("");
+        setMentionedUserIds([]);
       }
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -517,6 +526,94 @@ function TaskDetailModal({
       console.error("Error toggling reaction:", error);
     }
     setOpenEmojiPickerFor(null);
+  };
+
+  const filteredMentionUsers = users.filter((u) => {
+    if (!mentionSearch) return true;
+    const search = mentionSearch.toLowerCase();
+    return (u.name || "").toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
+  });
+
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setNewComment(value);
+
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
+
+    if (mentionMatch) {
+      setMentionSearch(mentionMatch[1]);
+      setShowMentionDropdown(true);
+      setMentionIndex(0);
+
+      if (textareaRef.current) {
+        const rect = textareaRef.current.getBoundingClientRect();
+        setMentionDropdownPos({
+          top: rect.top - 4,
+          left: rect.left + 8,
+        });
+      }
+    } else {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  const insertMention = (user: TaskUser) => {
+    if (!textareaRef.current) return;
+    const cursorPos = textareaRef.current.selectionStart;
+    const textBeforeCursor = newComment.slice(0, cursorPos);
+    const textAfterCursor = newComment.slice(cursorPos);
+    const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
+    if (!mentionMatch) return;
+
+    const mentionName = user.name || user.email.split("@")[0];
+    const beforeMention = textBeforeCursor.slice(0, mentionMatch.index);
+    const newText = `${beforeMention}@${mentionName} ${textAfterCursor}`;
+    setNewComment(newText);
+    setShowMentionDropdown(false);
+
+    if (!mentionedUserIds.includes(user.id)) {
+      setMentionedUserIds((prev) => [...prev, user.id]);
+    }
+
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newPos = (beforeMention + `@${mentionName} `).length;
+        textareaRef.current.selectionStart = newPos;
+        textareaRef.current.selectionEnd = newPos;
+        textareaRef.current.focus();
+      }
+    }, 0);
+  };
+
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMentionDropdown && filteredMentionUsers.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev + 1) % filteredMentionUsers.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev - 1 + filteredMentionUsers.length) % filteredMentionUsers.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertMention(filteredMentionUsers[mentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowMentionDropdown(false);
+        return;
+      }
+    }
+
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      handleAddComment();
+    }
   };
 
   const handleUploadFiles = async (files: FileList) => {
@@ -894,7 +991,23 @@ function TaskDetailModal({
                           </div>
                         </div>
                         <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
-                          {comment.text}
+                          {(() => {
+                            const userNames = users.map((u) => u.name || u.email.split("@")[0]).filter(Boolean);
+                            if (userNames.length === 0) return comment.text;
+                            const escapedNames = userNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+                            const mentionRegex = new RegExp(`(@(?:${escapedNames.join("|")}))`, "g");
+                            const parts = comment.text.split(mentionRegex);
+                            return parts.map((part, i) => {
+                              if (part.startsWith("@") && userNames.some((n) => part === `@${n}`)) {
+                                return (
+                                  <span key={i} className="text-purple-600 dark:text-purple-400 font-medium bg-purple-50 dark:bg-purple-900/20 rounded px-0.5">
+                                    {part}
+                                  </span>
+                                );
+                              }
+                              return part;
+                            });
+                          })()}
                         </p>
                         {/* Reactions */}
                         {reactionGroups.size > 0 && (
@@ -938,46 +1051,87 @@ function TaskDetailModal({
 
             {/* Add Comment Form */}
             {canEditData && (
-              <div className="border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Kommentar oder Notiz hinzufügen..."
-                  rows={6}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm resize-y border-0 focus:ring-0 focus:outline-none min-h-[120px]"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                      handleAddComment();
-                    }
-                  }}
-                />
-                <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    Cmd/Ctrl + Enter zum Senden
-                  </span>
-                  <button
-                    onClick={handleAddComment}
-                    disabled={!newComment.trim() || isAddingComment}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
-                  >
-                    {isAddingComment ? (
-                      <>
-                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Senden...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                        Senden
-                      </>
-                    )}
-                  </button>
+              <div className="relative">
+                <div className="border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden">
+                  <textarea
+                    ref={textareaRef}
+                    value={newComment}
+                    onChange={handleCommentChange}
+                    placeholder="Kommentar oder Notiz hinzufügen... Tippe @ um jemanden zu erwähnen"
+                    rows={6}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm resize-y border-0 focus:ring-0 focus:outline-none min-h-[120px]"
+                    onKeyDown={handleCommentKeyDown}
+                  />
+                  <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        Cmd/Ctrl + Enter zum Senden
+                      </span>
+                      {mentionedUserIds.length > 0 && (
+                        <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                          {mentionedUserIds.length} Person{mentionedUserIds.length !== 1 ? "en" : ""} erwähnt
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || isAddingComment}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      {isAddingComment ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Senden...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                          Senden
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
+                {/* Mention Dropdown – fixed to viewport to avoid overflow clipping */}
+                {showMentionDropdown && filteredMentionUsers.length > 0 && mentionDropdownPos && (
+                  <div
+                    className="fixed w-72 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 max-h-52 overflow-y-auto z-50"
+                    style={{ top: mentionDropdownPos.top, left: mentionDropdownPos.left, transform: "translateY(-100%)" }}
+                  >
+                    <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      Personen
+                    </div>
+                    {filteredMentionUsers.map((user, idx) => (
+                      <button
+                        key={user.id}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          insertMention(user);
+                        }}
+                        className={`w-full text-left px-3 py-2 flex items-center gap-2 text-sm transition-colors ${
+                          idx === mentionIndex
+                            ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        }`}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+                          {(user.name || user.email).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="block truncate font-medium">{user.name || user.email}</span>
+                          {user.name && (
+                            <span className="block truncate text-xs text-slate-400 dark:text-slate-500">{user.email}</span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

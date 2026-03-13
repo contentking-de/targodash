@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canEdit } from "@/lib/rbac";
-import { sendTaskCommentNotification } from "@/lib/resend";
+import { sendTaskCommentNotification, sendTaskMentionNotification } from "@/lib/resend";
 
 // GET - Alle Kommentare eines Tasks abrufen
 export async function GET(
@@ -75,7 +75,7 @@ export async function POST(
 
     const { id: taskId } = await params;
     const body = await request.json();
-    const { text } = body;
+    const { text, mentionedUserIds } = body;
 
     if (!text?.trim()) {
       return NextResponse.json({ error: "Comment text is required" }, { status: 400 });
@@ -124,6 +124,8 @@ export async function POST(
       (a) => a.user.id !== session.user.id && a.user.email
     );
 
+    const notifiedUserIds = new Set<string>();
+
     if (assigneesToNotify.length > 0) {
       try {
         const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "";
@@ -138,10 +140,40 @@ export async function POST(
             authorName,
             dashboardUrl,
           });
+          notifiedUserIds.add(assignee.user.id);
         }
       } catch (emailError) {
-        // E-Mail-Fehler loggen, aber Kommentar-Erstellung nicht abbrechen
         console.error("Error sending task comment notification emails:", emailError);
+      }
+    }
+
+    // E-Mail-Benachrichtigung an erwähnte User senden (die nicht bereits als Assignee benachrichtigt wurden)
+    if (mentionedUserIds?.length > 0) {
+      try {
+        const mentionedUsers = await prisma.user.findMany({
+          where: {
+            id: { in: mentionedUserIds },
+            NOT: { id: session.user.id },
+          },
+          select: { id: true, email: true },
+        });
+
+        const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "";
+        const dashboardUrl = `${baseUrl}/tasks?taskId=${task.id}`;
+        const authorName = session.user.name || session.user.email || "Jemand";
+
+        for (const mentionedUser of mentionedUsers) {
+          if (notifiedUserIds.has(mentionedUser.id)) continue;
+          await sendTaskMentionNotification({
+            to: mentionedUser.email,
+            taskTitle: task.title,
+            commentText: text.trim(),
+            authorName,
+            dashboardUrl,
+          });
+        }
+      } catch (emailError) {
+        console.error("Error sending task mention notification emails:", emailError);
       }
     }
 
