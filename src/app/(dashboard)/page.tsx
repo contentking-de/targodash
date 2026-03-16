@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { StatCard } from "@/components/ui/StatCard";
 import { PeriodSelector } from "@/components/ui/PeriodSelector";
 import { LineChart } from "@/components/charts/LineChart";
 import { PieChart } from "@/components/charts/PieChart";
 import { BarChart } from "@/components/charts/BarChart";
 import { useProperty } from "@/contexts/PropertyContext";
+
+const RESTRICTED_ROLES = ["brand", "compliance", "legal", "produktmanagement"];
 
 interface StatsData {
   current: {
@@ -65,6 +69,8 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const { selectedProperty } = useProperty();
+  const { data: session } = useSession();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [period, setPeriod] = useState("28d");
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -78,6 +84,12 @@ export default function DashboardPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (session?.user?.role && RESTRICTED_ROLES.includes(session.user.role as string)) {
+      router.replace("/content-check");
+    }
+  }, [session, router]);
 
   // Dashboard-Statistiken laden (unabhängig von GSC)
   useEffect(() => {

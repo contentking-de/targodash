@@ -54,6 +54,7 @@ export default function TicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [showClosed, setShowClosed] = useState(false);
 
   // Form states
   const [newTitle, setNewTitle] = useState("");
@@ -309,11 +310,14 @@ export default function TicketsPage() {
     return user.name || user.email;
   };
 
-  const filteredTickets = tickets.filter((ticket) => {
-    if (filterType !== "all" && ticket.type !== filterType) return false;
-    if (filterStatus !== "all" && ticket.status !== filterStatus) return false;
-    return true;
-  });
+  const filteredTickets = tickets
+    .filter((ticket) => {
+      if (filterType !== "all" && ticket.type !== filterType) return false;
+      if (filterStatus !== "all" && ticket.status !== filterStatus) return false;
+      if (!showClosed && filterStatus === "all" && ticket.status === "closed") return false;
+      return true;
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Berechne Ticket-Statistiken
   const ticketStats = {
@@ -553,7 +557,7 @@ export default function TicketsPage() {
       )}
 
       {/* Filter */}
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap items-end gap-4">
         <div>
           <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
             Typ
@@ -583,6 +587,27 @@ export default function TicketsPage() {
             <option value="closed">Geschlossen</option>
           </select>
         </div>
+        {filterStatus === "all" && (
+          <button
+            onClick={() => setShowClosed(!showClosed)}
+            className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors flex items-center gap-2 ${
+              showClosed
+                ? "bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/30"
+                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {showClosed ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+              )}
+            </svg>
+            {showClosed
+              ? `Geschlossene angezeigt (${ticketStats.closed})`
+              : `Geschlossene einblenden (${ticketStats.closed})`}
+          </button>
+        )}
       </div>
 
       {/* Tickets Liste und Detail */}

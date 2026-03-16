@@ -214,6 +214,9 @@ const processNavigation: NavigationItem[] = [
   },
 ];
 
+// Rollen, die nur das Aufgaben-Modul sehen dürfen
+const RESTRICTED_ROLES = ["brand", "compliance", "legal", "produktmanagement"] as const;
+
 // Chevron Icon für ausklappbare Menüs
 function ChevronIcon({ isOpen }: { isOpen: boolean }) {
   return (
@@ -323,6 +326,9 @@ export function Sidebar() {
   const isSuperAgentActive = pathname === "/superagent";
   const isSEOHelperActive = pathname.startsWith("/seo-helper");
   
+  const userRole = session?.user?.role as string | undefined;
+  const isRestrictedRole = RESTRICTED_ROLES.includes(userRole as typeof RESTRICTED_ROLES[number]);
+  
   // State für ausgeklappte Menüpunkte
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   
@@ -373,38 +379,44 @@ export function Sidebar() {
         </div>
         <nav className="flex flex-1 flex-col">
           {/* Hauptnavigation */}
-          <NavigationItems 
-            items={mainNavigation} 
-            pathname={pathname} 
-            expandedItems={expandedItems}
-            onToggleExpand={handleToggleExpand}
-          />
+          {!isRestrictedRole && (
+            <NavigationItems 
+              items={mainNavigation} 
+              pathname={pathname} 
+              expandedItems={expandedItems}
+              onToggleExpand={handleToggleExpand}
+            />
+          )}
           
           {/* Daten - Menübox */}
-          <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Daten
-            </h3>
-            <NavigationItems 
-              items={dataNavigation} 
-              pathname={pathname}
-              expandedItems={expandedItems}
-              onToggleExpand={handleToggleExpand}
-            />
-          </div>
+          {!isRestrictedRole && (
+            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Daten
+              </h3>
+              <NavigationItems 
+                items={dataNavigation} 
+                pathname={pathname}
+                expandedItems={expandedItems}
+                onToggleExpand={handleToggleExpand}
+              />
+            </div>
+          )}
           
           {/* Prozesse - Menübox */}
-          <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Prozesse
-            </h3>
-            <NavigationItems 
-              items={processNavigation} 
-              pathname={pathname}
-              expandedItems={expandedItems}
-              onToggleExpand={handleToggleExpand}
-            />
-          </div>
+          {!isRestrictedRole && (
+            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Prozesse
+              </h3>
+              <NavigationItems 
+                items={processNavigation} 
+                pathname={pathname}
+                expandedItems={expandedItems}
+                onToggleExpand={handleToggleExpand}
+              />
+            </div>
+          )}
           
           {/* Aufgaben - Menübox */}
           <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
@@ -468,47 +480,51 @@ export function Sidebar() {
           </div>
 
           {/* Reporting - Menübox */}
-          <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Reporting
-            </h3>
-            <NavigationItems 
-              items={reportingNavigation} 
-              pathname={pathname}
-              expandedItems={expandedItems}
-              onToggleExpand={handleToggleExpand}
-            />
-          </div>
+          {!isRestrictedRole && (
+            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Reporting
+              </h3>
+              <NavigationItems 
+                items={reportingNavigation} 
+                pathname={pathname}
+                expandedItems={expandedItems}
+                onToggleExpand={handleToggleExpand}
+              />
+            </div>
+          )}
           
           {/* KI & Tools - ganz unten */}
-          <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-700 space-y-1">
-            <Link
-              href="/superagent"
-              className={`group flex gap-x-3 rounded-lg p-3 text-sm font-medium transition-all duration-200 ${
-                isSuperAgentActive
-                  ? "bg-purple-600 text-white"
-                  : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-              </svg>
-              SuperAgent
-            </Link>
-            <Link
-              href="/seo-helper"
-              className={`group flex gap-x-3 rounded-lg p-3 text-sm font-medium transition-all duration-200 ${
-                isSEOHelperActive
-                  ? "bg-teal-600 text-white"
-                  : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
-              </svg>
-              SEO Helper
-            </Link>
-          </div>
+          {!isRestrictedRole && (
+            <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-700 space-y-1">
+              <Link
+                href="/superagent"
+                className={`group flex gap-x-3 rounded-lg p-3 text-sm font-medium transition-all duration-200 ${
+                  isSuperAgentActive
+                    ? "bg-purple-600 text-white"
+                    : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                </svg>
+                SuperAgent
+              </Link>
+              <Link
+                href="/seo-helper"
+                className={`group flex gap-x-3 rounded-lg p-3 text-sm font-medium transition-all duration-200 ${
+                  isSEOHelperActive
+                    ? "bg-teal-600 text-white"
+                    : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+                </svg>
+                SEO Helper
+              </Link>
+            </div>
+          )}
           
         </nav>
       </div>
