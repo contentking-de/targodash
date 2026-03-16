@@ -32,6 +32,11 @@ export async function GET() {
         },
         comments: {
           orderBy: { createdAt: "asc" },
+          include: {
+            reactions: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
         },
       },
       orderBy: [
@@ -41,7 +46,34 @@ export async function GET() {
       ],
     });
 
-    return NextResponse.json({ tickets });
+    // User-Daten für Kommentare und Reactions laden
+    const allCommentUserIds = [...new Set(
+      tickets.flatMap((t) => [
+        ...t.comments.map((c) => c.userId),
+        ...t.comments.flatMap((c) => c.reactions.map((r) => r.userId)),
+      ])
+    )];
+    const commentUsers = allCommentUserIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: allCommentUserIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+    const userMap = new Map(commentUsers.map((u) => [u.id, u]));
+
+    const ticketsWithCommentUsers = tickets.map((ticket) => ({
+      ...ticket,
+      comments: ticket.comments.map((comment) => ({
+        ...comment,
+        user: userMap.get(comment.userId) || { id: comment.userId, name: null, email: "Unbekannt" },
+        reactions: comment.reactions.map((r) => ({
+          ...r,
+          user: userMap.get(r.userId) || { id: r.userId, name: null, email: "Unbekannt" },
+        })),
+      })),
+    }));
+
+    return NextResponse.json({ tickets: ticketsWithCommentUsers });
   } catch (error) {
     console.error("Error fetching tickets:", error);
     return NextResponse.json(

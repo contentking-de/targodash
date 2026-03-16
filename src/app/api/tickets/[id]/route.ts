@@ -43,6 +43,11 @@ export async function GET(
         },
         comments: {
           orderBy: { createdAt: "asc" },
+          include: {
+            reactions: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
         },
       },
     });
@@ -51,7 +56,32 @@ export async function GET(
       return NextResponse.json({ error: "Ticket nicht gefunden" }, { status: 404 });
     }
 
-    return NextResponse.json({ ticket });
+    // User-Daten für Kommentare und Reactions laden
+    const commentUserIds = [...new Set([
+      ...ticket.comments.map((c) => c.userId),
+      ...ticket.comments.flatMap((c) => c.reactions.map((r) => r.userId)),
+    ])];
+    const commentUsers = commentUserIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: commentUserIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+    const userMap = new Map(commentUsers.map((u) => [u.id, u]));
+
+    const ticketWithCommentUsers = {
+      ...ticket,
+      comments: ticket.comments.map((comment) => ({
+        ...comment,
+        user: userMap.get(comment.userId) || { id: comment.userId, name: null, email: "Unbekannt" },
+        reactions: comment.reactions.map((r) => ({
+          ...r,
+          user: userMap.get(r.userId) || { id: r.userId, name: null, email: "Unbekannt" },
+        })),
+      })),
+    };
+
+    return NextResponse.json({ ticket: ticketWithCommentUsers });
   } catch (error) {
     console.error("Error fetching ticket:", error);
     return NextResponse.json(
@@ -202,9 +232,39 @@ export async function PATCH(
         },
         comments: {
           orderBy: { createdAt: "asc" },
+          include: {
+            reactions: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
         },
       },
     });
+
+    // User-Daten für Kommentare und Reactions
+    const patchCommentUserIds = [...new Set([
+      ...ticket.comments.map((c) => c.userId),
+      ...ticket.comments.flatMap((c) => c.reactions.map((r) => r.userId)),
+    ])];
+    const patchCommentUsers = patchCommentUserIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: patchCommentUserIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+    const patchUserMap = new Map(patchCommentUsers.map((u) => [u.id, u]));
+
+    const ticketWithCommentUsers = {
+      ...ticket,
+      comments: ticket.comments.map((comment) => ({
+        ...comment,
+        user: patchUserMap.get(comment.userId) || { id: comment.userId, name: null, email: "Unbekannt" },
+        reactions: comment.reactions.map((r) => ({
+          ...r,
+          user: patchUserMap.get(r.userId) || { id: r.userId, name: null, email: "Unbekannt" },
+        })),
+      })),
+    };
 
     // Update-Benachrichtigung an alle Assignees senden (bei Status-/Feld-Änderungen)
     if (status || title || description || type || priority) {
@@ -260,9 +320,9 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ ticket });
+    return NextResponse.json({ ticket: ticketWithCommentUsers });
   } catch (error) {
-    console.error("Error updating ticket:", error);
+    console.error("Error updating ticket:");
     return NextResponse.json(
       { error: "Fehler beim Aktualisieren des Tickets" },
       { status: 500 }

@@ -5,10 +5,28 @@ import { useSession } from "next-auth/react";
 import { canEdit } from "@/lib/rbac";
 import { StatCard } from "@/components/ui/StatCard";
 
+interface TicketCommentReaction {
+  id: string;
+  commentId: string;
+  userId: string;
+  emoji: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+}
+
 interface TicketComment {
   id: string;
   text: string;
   userId: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  reactions: TicketCommentReaction[];
   createdAt: string;
 }
 
@@ -71,6 +89,19 @@ export default function TicketsPage() {
   const [newComment, setNewComment] = useState("");
   const [isAddingComment, setIsAddingComment] = useState(false);
 
+  // Mention states
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState("");
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
+  const [mentionDropdownPos, setMentionDropdownPos] = useState<{ top: number; left: number } | null>(null);
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Reaction states
+  const QUICK_EMOJIS = ["👍", "❤️", "😄", "🎉", "🚀", "👀", "💯", "🙏"];
+  const [openEmojiPickerFor, setOpenEmojiPickerFor] = useState<string | null>(null);
+  const [localComments, setLocalComments] = useState<TicketComment[]>([]);
+
   // Assignee edit state (für Detail-View)
   const [isEditingAssignees, setIsEditingAssignees] = useState(false);
   const [editAssigneeIds, setEditAssigneeIds] = useState<string[]>([]);
@@ -86,6 +117,142 @@ export default function TicketsPage() {
       detailRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [selectedTicket?.id]);
+
+  useEffect(() => {
+    setLocalComments(selectedTicket?.comments || []);
+    setMentionedUserIds([]);
+    setShowMentionDropdown(false);
+    setOpenEmojiPickerFor(null);
+  }, [selectedTicket?.id, selectedTicket?.comments]);
+
+  const filteredMentionUsers = users.filter((u) => {
+    if (!mentionSearch) return true;
+    const search = mentionSearch.toLowerCase();
+    return (u.name || "").toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
+  });
+
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setNewComment(value);
+
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
+
+    if (mentionMatch) {
+      setMentionSearch(mentionMatch[1]);
+      setShowMentionDropdown(true);
+      setMentionIndex(0);
+
+      if (commentTextareaRef.current) {
+        const rect = commentTextareaRef.current.getBoundingClientRect();
+        setMentionDropdownPos({
+          top: rect.top - 4,
+          left: rect.left + 8,
+        });
+      }
+    } else {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  const insertMention = (user: UserOption) => {
+    if (!commentTextareaRef.current) return;
+    const cursorPos = commentTextareaRef.current.selectionStart;
+    const textBeforeCursor = newComment.slice(0, cursorPos);
+    const textAfterCursor = newComment.slice(cursorPos);
+    const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
+    if (!mentionMatch) return;
+
+    const mentionName = user.name || user.email.split("@")[0];
+    const beforeMention = textBeforeCursor.slice(0, mentionMatch.index);
+    const newText = `${beforeMention}@${mentionName} ${textAfterCursor}`;
+    setNewComment(newText);
+    setShowMentionDropdown(false);
+
+    if (!mentionedUserIds.includes(user.id)) {
+      setMentionedUserIds((prev) => [...prev, user.id]);
+    }
+
+    setTimeout(() => {
+      if (commentTextareaRef.current) {
+        const newPos = (beforeMention + `@${mentionName} `).length;
+        commentTextareaRef.current.selectionStart = newPos;
+        commentTextareaRef.current.selectionEnd = newPos;
+        commentTextareaRef.current.focus();
+      }
+    }, 0);
+  };
+
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMentionDropdown && filteredMentionUsers.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev + 1) % filteredMentionUsers.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev - 1 + filteredMentionUsers.length) % filteredMentionUsers.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertMention(filteredMentionUsers[mentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowMentionDropdown(false);
+        return;
+      }
+    }
+
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && selectedTicket) {
+      addComment(selectedTicket.id);
+    }
+  };
+
+  const handleToggleReaction = async (commentId: string, emoji: string) => {
+    if (!selectedTicket) return;
+    try {
+      const response = await fetch(`/api/tickets/${selectedTicket.id}/comments/${commentId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLocalComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId ? { ...c, reactions: data.reactions } : c
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling reaction:", error);
+    }
+    setOpenEmojiPickerFor(null);
+  };
+
+  const renderCommentText = (text: string) => {
+    const userNames = users.map((u) => u.name || u.email.split("@")[0]).filter(Boolean);
+    if (userNames.length === 0) return text;
+    const escapedNames = userNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const mentionRegex = new RegExp(`(@(?:${escapedNames.join("|")}))`, "g");
+    const parts = text.split(mentionRegex);
+    return parts.map((part, i) => {
+      if (part.startsWith("@") && userNames.some((n) => part === `@${n}`)) {
+        return (
+          <span key={i} className="text-purple-600 dark:text-purple-400 font-medium bg-purple-50 dark:bg-purple-900/20 rounded px-0.5">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
 
   const fetchTickets = async () => {
     try {
@@ -197,11 +364,10 @@ export default function TicketsPage() {
       const response = await fetch(`/api/tickets/${ticketId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: newComment.trim() }),
+        body: JSON.stringify({ text: newComment.trim(), mentionedUserIds }),
       });
 
       if (response.ok) {
-        // Ticket neu laden
         const ticketResponse = await fetch(`/api/tickets/${ticketId}`);
         const data = await ticketResponse.json();
         if (data.ticket) {
@@ -209,6 +375,7 @@ export default function TicketsPage() {
           setSelectedTicket(data.ticket);
         }
         setNewComment("");
+        setMentionedUserIds([]);
       }
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -890,43 +1057,187 @@ export default function TicketsPage() {
             {/* Kommentare */}
             <div className="p-6">
               <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
-                Kommentare ({selectedTicket.comments?.length || 0})
+                Kommentare ({localComments.length})
               </h3>
 
-              {selectedTicket.comments && selectedTicket.comments.length > 0 && (
+              {localComments.length > 0 && (
                 <div className="space-y-3 mb-4">
-                  {selectedTicket.comments.map((comment) => (
-                    <div
-                      key={comment.id}
-                      className="bg-slate-100 dark:bg-slate-900 rounded-lg p-3"
-                    >
-                      <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap">
-                        {comment.text}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                        {formatDate(comment.createdAt)}
-                      </p>
-                    </div>
-                  ))}
+                  {localComments.map((comment) => {
+                    const reactionGroups = new Map<string, { emoji: string; users: { id: string; name: string | null; email: string }[]; count: number }>();
+                    (comment.reactions || []).forEach((r) => {
+                      const existing = reactionGroups.get(r.emoji);
+                      const user = r.user || { id: r.userId, name: null, email: "Unbekannt" };
+                      if (existing) {
+                        existing.users.push(user);
+                        existing.count++;
+                      } else {
+                        reactionGroups.set(r.emoji, { emoji: r.emoji, users: [user], count: 1 });
+                      }
+                    });
+
+                    return (
+                      <div
+                        key={comment.id}
+                        className="bg-slate-100 dark:bg-slate-900 rounded-lg p-3 group/comment"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+                              {(comment.user?.name || comment.user?.email || "?").charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-sm font-medium text-slate-900 dark:text-white">
+                              {comment.user?.name || comment.user?.email || "Unbekannt"}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-500">
+                              {formatDate(comment.createdAt)}
+                            </span>
+                          </div>
+                          <div className="relative ml-auto">
+                            <button
+                              onClick={() => setOpenEmojiPickerFor(openEmojiPickerFor === comment.id ? null : comment.id)}
+                              className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 opacity-0 group-hover/comment:opacity-100 transition-all"
+                              title="Reaktion hinzufügen"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
+                            {openEmojiPickerFor === comment.id && (
+                              <>
+                                <div className="fixed inset-0 z-10" onClick={() => setOpenEmojiPickerFor(null)} />
+                                <div className="absolute right-0 top-8 z-20 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-2 flex gap-1">
+                                  {QUICK_EMOJIS.map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      onClick={() => handleToggleReaction(comment.id, emoji)}
+                                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-lg transition-colors hover:scale-110"
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                          {renderCommentText(comment.text)}
+                        </p>
+
+                        {reactionGroups.size > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                            {Array.from(reactionGroups.values()).map((group) => {
+                              const hasReacted = group.users.some((u) => u.id === session?.user?.id);
+                              return (
+                                <button
+                                  key={group.emoji}
+                                  onClick={() => handleToggleReaction(comment.id, group.emoji)}
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all hover:scale-105 ${
+                                    hasReacted
+                                      ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-300 dark:ring-blue-700"
+                                      : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700"
+                                  }`}
+                                  title={group.users.map((u) => u.name || u.email).join(", ")}
+                                >
+                                  <span className="text-sm">{group.emoji}</span>
+                                  <span>{group.count}</span>
+                                </button>
+                              );
+                            })}
+                            <button
+                              onClick={() => setOpenEmojiPickerFor(openEmojiPickerFor === comment.id ? null : comment.id)}
+                              className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                              title="Reaktion hinzufügen"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
-              {/* Neuer Kommentar */}
-              <div className="space-y-2">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Kommentar hinzufügen..."
-                  rows={2}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm"
-                />
-                <button
-                  onClick={() => addComment(selectedTicket.id)}
-                  disabled={isAddingComment || !newComment.trim()}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
-                >
-                  {isAddingComment ? "Sende..." : "Kommentar senden"}
-                </button>
+              {/* Neuer Kommentar mit @-Mentions */}
+              <div className="relative">
+                <div className="border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden">
+                  <textarea
+                    ref={commentTextareaRef}
+                    value={newComment}
+                    onChange={handleCommentChange}
+                    placeholder="Kommentar hinzufügen... Tippe @ um jemanden zu erwähnen"
+                    rows={4}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm resize-y border-0 focus:ring-0 focus:outline-none min-h-[80px]"
+                    onKeyDown={handleCommentKeyDown}
+                  />
+                  <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        Cmd/Ctrl + Enter zum Senden
+                      </span>
+                      {mentionedUserIds.length > 0 && (
+                        <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                          {mentionedUserIds.length} Person{mentionedUserIds.length !== 1 ? "en" : ""} erwähnt
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => addComment(selectedTicket.id)}
+                      disabled={isAddingComment || !newComment.trim()}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      {isAddingComment ? (
+                        "Sende..."
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                          Senden
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mention Dropdown */}
+                {showMentionDropdown && filteredMentionUsers.length > 0 && mentionDropdownPos && (
+                  <div
+                    className="fixed w-72 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 max-h-52 overflow-y-auto z-50"
+                    style={{ top: mentionDropdownPos.top, left: mentionDropdownPos.left, transform: "translateY(-100%)" }}
+                  >
+                    <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      Personen
+                    </div>
+                    {filteredMentionUsers.map((user, idx) => (
+                      <button
+                        key={user.id}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          insertMention(user);
+                        }}
+                        className={`w-full text-left px-3 py-2 flex items-center gap-2 text-sm transition-colors ${
+                          idx === mentionIndex
+                            ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        }`}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+                          {(user.name || user.email).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="block truncate font-medium">{user.name || user.email}</span>
+                          {user.name && (
+                            <span className="block truncate text-xs text-slate-400 dark:text-slate-500">{user.email}</span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -357,14 +357,27 @@ model TicketAssignee {
 
 // Ticket Kommentare
 model TicketComment {
-  id        String   @id @default(cuid())
+  id        String                  @id @default(cuid())
   ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticket    Ticket                  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   userId    String
-  text      String   @db.Text
-  createdAt DateTime @default(now())
+  text      String                  @db.Text
+  reactions TicketCommentReaction[]
+  createdAt DateTime                @default(now())
 
   @@index([ticketId])
+}
+
+model TicketCommentReaction {
+  id        String        @id @default(cuid())
+  commentId String
+  comment   TicketComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  emoji     String
+  createdAt DateTime      @default(now())
+
+  @@unique([commentId, userId, emoji])
+  @@index([commentId])
 }
 
 // Briefing System - SEO Content Briefings
