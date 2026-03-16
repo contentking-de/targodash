@@ -1167,6 +1167,8 @@ function TaskDetailModal({
 }
 
 // New Task Modal
+const TASK_DRAFT_KEY = "task-draft";
+
 function NewTaskModal({
   status,
   users,
@@ -1185,6 +1187,47 @@ function NewTaskModal({
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(TASK_DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (draft.title) setTitle(draft.title);
+      if (draft.description) setDescription(draft.description);
+      if (draft.priority) setPriority(draft.priority);
+      if (draft.category) setCategory(draft.category);
+      if (draft.assigneeIds) setAssigneeIds(draft.assigneeIds);
+      if (draft.dueDate) setDueDate(draft.dueDate);
+      if (draft.title || draft.description) setDraftRestored(true);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const hasContent = title.trim() || description.trim() || category || dueDate || assigneeIds.length > 0 || priority !== "medium";
+    if (!hasContent) {
+      localStorage.removeItem(TASK_DRAFT_KEY);
+      return;
+    }
+    const draft = { title, description, priority, category, assigneeIds, dueDate };
+    localStorage.setItem(TASK_DRAFT_KEY, JSON.stringify(draft));
+  }, [title, description, priority, category, assigneeIds, dueDate]);
+
+  const clearDraft = () => {
+    localStorage.removeItem(TASK_DRAFT_KEY);
+  };
+
+  const handleDiscardDraft = () => {
+    clearDraft();
+    setTitle("");
+    setDescription("");
+    setPriority("medium");
+    setCategory("");
+    setAssigneeIds([]);
+    setDueDate("");
+    setDraftRestored(false);
+  };
 
   const toggleAssignee = (userId: string) => {
     setAssigneeIds((prev) =>
@@ -1207,6 +1250,7 @@ function NewTaskModal({
       dueDate: dueDate || null,
       assigneeIds,
     });
+    clearDraft();
     setIsCreating(false);
     onClose();
   };
@@ -1225,6 +1269,23 @@ function NewTaskModal({
             In Spalte: {COLUMNS.find((c) => c.id === status)?.title}
           </p>
         </div>
+
+        {draftRestored && (
+          <div className="mx-4 mt-4 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Entwurf wiederhergestellt
+            </div>
+            <button
+              onClick={handleDiscardDraft}
+              className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 font-medium whitespace-nowrap"
+            >
+              Verwerfen
+            </button>
+          </div>
+        )}
 
         <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
           <div>
