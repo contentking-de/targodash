@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
 
 // --- Types ---
@@ -115,6 +116,8 @@ const COMMENT_ROLE_STYLES: Record<string, string> = {
 
 export default function ContentCheckPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
@@ -141,6 +144,17 @@ export default function ContentCheckPage() {
     loadArticles();
   }, [loadArticles]);
 
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    if (deepLinkHandled.current) return;
+    const articleId = searchParams.get("article");
+    if (articleId && !selectedArticle) {
+      deepLinkHandled.current = true;
+      openArticle(articleId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, selectedArticle]);
+
   const handleDeleteArticle = async (id: string) => {
     if (!confirm("Artikel wirklich löschen? Alle Kommentare und die gesamte Status-Historie werden ebenfalls gelöscht.")) return;
     setDeletingId(id);
@@ -158,7 +172,10 @@ export default function ContentCheckPage() {
 
   const openArticle = async (id: string) => {
     const res = await fetch(`/api/content-reviews/${id}`);
-    if (res.ok) setSelectedArticle(await res.json());
+    if (res.ok) {
+      setSelectedArticle(await res.json());
+      router.replace(`/content-check?article=${id}`, { scroll: false });
+    }
   };
 
   const filteredArticles = articles
@@ -180,6 +197,7 @@ export default function ContentCheckPage() {
         article={selectedArticle}
         onBack={() => {
           setSelectedArticle(null);
+          router.replace("/content-check", { scroll: false });
           loadArticles();
         }}
         onUpdate={(updated) => setSelectedArticle(updated)}
@@ -188,6 +206,7 @@ export default function ContentCheckPage() {
         onDelete={async () => {
           await handleDeleteArticle(selectedArticle.id);
           setSelectedArticle(null);
+          router.replace("/content-check", { scroll: false });
         }}
       />
     );

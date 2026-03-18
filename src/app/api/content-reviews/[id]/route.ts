@@ -176,7 +176,7 @@ export async function PATCH(
         : [];
 
       const baseUrl = process.env.NEXTAUTH_URL || "https://dashboard.tasketeer.com";
-      const dashboardUrl = `${baseUrl}/content-check`;
+      const dashboardUrl = `${baseUrl}/content-check?article=${id}`;
 
       await Promise.allSettled(
         notifyUsers.map((user) =>
@@ -340,7 +340,7 @@ export async function PATCH(
       });
 
       const baseUrl = process.env.NEXTAUTH_URL || "https://dashboard.tasketeer.com";
-      const dashboardUrl = `${baseUrl}/content-check`;
+      const dashboardUrl = `${baseUrl}/content-check?article=${id}`;
 
       await Promise.allSettled(
         recipients.map((recipient) =>
