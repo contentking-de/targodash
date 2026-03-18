@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canEdit } from "@/lib/rbac";
 import { sendEditorialPlanStatusNotification } from "@/lib/resend";
+import { createNotification } from "@/lib/notifications";
 
 const STATUS_LABELS: Record<string, string> = {
   planned: "Geplant",
@@ -175,6 +176,22 @@ export async function PATCH(
             updaterName,
             dueDate: entry.dueDate.toISOString(),
             dashboardUrl,
+          });
+        }
+
+        const recipientUserIds = [
+          ...entry.assignees
+            .filter((a) => a.userId !== session.user!.id)
+            .map((a) => a.userId),
+          ...(existingEntry.creatorId !== session.user!.id ? [existingEntry.creatorId] : []),
+        ];
+        for (const uid of [...new Set(recipientUserIds)]) {
+          await createNotification({
+            userId: uid,
+            type: "editorial_plan",
+            title: `Redaktionsplan: Status geändert`,
+            message: `${updaterName} hat "${entry.title}" auf "${STATUS_LABELS[status] || status}" gesetzt.`,
+            link: "/redaktionsplan",
           });
         }
       } catch (emailError) {

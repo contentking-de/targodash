@@ -38,6 +38,7 @@ model User {
   generatedArticles GeneratedArticle[] @relation("ArticleCreator")
   contentComments   ContentComment[]   @relation("ContentCommentAuthor")
   absences          Absence[]
+  notifications     Notification[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -669,6 +670,22 @@ model ArticleStatusHistory {
 
   @@index([articleId])
   @@index([createdAt])
+}
+
+// In-App Benachrichtigungen
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // task_assigned, task_comment, task_mention, ticket_assigned, ticket_update, ticket_mention, briefing_new, briefing_completed, editorial_plan, content_review, revision_request, recheck_ready, new_content
+  title     String
+  message   String   @db.Text
+  link      String?  // Deep-Link zur entsprechenden Seite im Dashboard
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }
 
 // Changelog Zeiterfassung - Minuten pro Commit

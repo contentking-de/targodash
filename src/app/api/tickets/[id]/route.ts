@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendTicketUpdateNotification, sendTicketAssignmentNotification } from "@/lib/resend";
+import { createNotification } from "@/lib/notifications";
 
 const statusLabels: Record<string, string> = {
   open: "Offen",
@@ -195,6 +196,13 @@ export async function PATCH(
               creatorName,
               dashboardUrl,
             });
+            await createNotification({
+              userId: assignee.id,
+              type: "ticket_assigned",
+              title: "Ticket zugewiesen",
+              message: `${creatorName} hat dir das Ticket "${existingTicket.title}" zugewiesen.`,
+              link: "/tickets",
+            });
           } catch (emailError) {
             console.error(`Failed to send ticket assignment email to ${assignee.email}:`, emailError);
           }
@@ -317,6 +325,20 @@ export async function PATCH(
         } catch (emailError) {
           console.error(`Failed to send ticket update email to ${email}:`, emailError);
         }
+      }
+
+      const allNotifyUserIds = [
+        ...assigneesToNotify.map((a) => a.user.id),
+        ...(shouldNotifyCreator ? [existingTicket.userId] : []),
+      ].filter((uid) => uid !== session.user!.id);
+      for (const uid of [...new Set(allNotifyUserIds)]) {
+        await createNotification({
+          userId: uid,
+          type: "ticket_update",
+          title: `Ticket aktualisiert: ${ticket.title}`,
+          message: `${updaterName}: ${updateDetails}`,
+          link: "/tickets",
+        });
       }
     }
 

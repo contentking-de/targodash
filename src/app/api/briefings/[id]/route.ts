@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasFullAdminRights } from "@/lib/rbac";
 import { sendBriefingCompletedNotification } from "@/lib/resend";
+import { createNotification } from "@/lib/notifications";
 
 // GET - Einzelnes Briefing laden
 export async function GET(
@@ -193,6 +194,14 @@ export async function PATCH(
           briefingTitle: updatedBriefing.title,
           briefingNumber: updatedBriefing.briefingNumber,
           dashboardUrl,
+        });
+
+        await createNotification({
+          userId: updatedBriefing.requester.id,
+          type: "briefing_completed",
+          title: `Briefing fertiggestellt: #${updatedBriefing.briefingNumber}`,
+          message: `Dein Briefing "${updatedBriefing.title}" wurde fertiggestellt.`,
+          link: "/briefings",
         });
       } catch (emailError) {
         // E-Mail-Fehler loggen, aber Update nicht abbrechen

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canEdit } from "@/lib/rbac";
 import { sendEditorialPlanStatusNotification } from "@/lib/resend";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET() {
   try {
@@ -122,6 +123,13 @@ export async function POST(request: NextRequest) {
               updaterName: creatorName,
               dueDate: entry.dueDate.toISOString(),
               dashboardUrl,
+            });
+            await createNotification({
+              userId: assignee.userId,
+              type: "editorial_plan",
+              title: "Redaktionsplan: Neuer Eintrag",
+              message: `${creatorName} hat dir den Eintrag "${entry.title}" zugewiesen.`,
+              link: "/redaktionsplan",
             });
           }
         }

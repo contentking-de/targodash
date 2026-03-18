@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendTicketUpdateNotification, sendTicketMentionNotification } from "@/lib/resend";
+import { createNotification } from "@/lib/notifications";
 
 // GET /api/tickets/[id]/comments - Alle Kommentare eines Tickets abrufen
 export async function GET(
@@ -136,6 +137,13 @@ export async function POST(
             updaterName: authorName,
             dashboardUrl,
           });
+          await createNotification({
+            userId: assignee.user.id,
+            type: "ticket_update",
+            title: `Neuer Kommentar: ${ticket.title}`,
+            message: `${authorName}: ${truncatedComment}`,
+            link: "/tickets",
+          });
           notifiedUserIds.add(assignee.user.id);
         } catch (emailError) {
           console.error(`Failed to send ticket comment email to ${assignee.user.email}:`, emailError);
@@ -158,6 +166,13 @@ export async function POST(
             updateDetails: truncatedComment,
             updaterName: authorName,
             dashboardUrl,
+          });
+          await createNotification({
+            userId: creator.id,
+            type: "ticket_update",
+            title: `Neuer Kommentar: ${ticket.title}`,
+            message: `${authorName}: ${truncatedComment}`,
+            link: "/tickets",
           });
           notifiedUserIds.add(creator.id);
         } catch (emailError) {
@@ -186,6 +201,13 @@ export async function POST(
               commentText: text.trim(),
               authorName,
               dashboardUrl,
+            });
+            await createNotification({
+              userId: mentionedUser.id,
+              type: "ticket_mention",
+              title: `${authorName} hat dich erwähnt`,
+              message: `In Ticket "${ticket.title}": ${text.trim().substring(0, 200)}${text.trim().length > 200 ? "..." : ""}`,
+              link: "/tickets",
             });
           } catch (emailError) {
             console.error(`Failed to send ticket mention email to ${mentionedUser.email}:`, emailError);

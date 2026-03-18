@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PropertySelector } from "@/components/ui/PropertySelector";
 import { useProperty } from "@/contexts/PropertyContext";
+import { NotificationBell } from "@/components/dashboard/NotificationBell";
 
 interface HeaderProps {
   user: {
@@ -84,6 +85,9 @@ export function Header({ user }: HeaderProps) {
             </svg>
             <span className="hidden sm:inline">Abmelden</span>
           </button>
+
+          {/* Notification Bell */}
+          <NotificationBell />
 
           {/* User Menu */}
           <div className="relative">

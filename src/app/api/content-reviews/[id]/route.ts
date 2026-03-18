@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { sendContentReviewNotification, sendRecheckReadyNotification } from "@/lib/resend";
 import { isAgentur } from "@/lib/rbac";
+import { createNotificationsForUsers } from "@/lib/notifications";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   draft: ["pm_review"],
@@ -189,6 +190,20 @@ export async function PATCH(
           })
         )
       );
+
+      const notifyUsersFull = responsibleRole
+        ? await prisma.user.findMany({
+            where: { role: responsibleRole },
+            select: { id: true },
+          })
+        : [];
+      await createNotificationsForUsers({
+        userIds: notifyUsersFull.map((u) => u.id),
+        type: "recheck_ready",
+        title: "Überarbeitung abgeschlossen",
+        message: `${resolvedByName} hat die Überarbeitung für "${article.title}" abgeschlossen. ${recheckComments.length} Recheck-Kommentare warten.`,
+        link: `/content-check?article=${id}`,
+      });
     }
 
     return NextResponse.json(updated);
@@ -353,6 +368,18 @@ export async function PATCH(
           })
         )
       );
+
+      const recipientsFull = await prisma.user.findMany({
+        where: { role: notifyRole },
+        select: { id: true },
+      });
+      await createNotificationsForUsers({
+        userIds: recipientsFull.map((u) => u.id),
+        type: "content_review",
+        title: "Content-Review",
+        message: `${changedByName} hat "${article.title}" in den Review-Status überführt. Bitte prüfen.`,
+        link: `/content-check?article=${id}`,
+      });
     } catch (emailError) {
       console.error("Error sending content review notifications:", emailError);
     }

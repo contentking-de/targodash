@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendTicketAssignmentNotification } from "@/lib/resend";
+import { createNotification } from "@/lib/notifications";
 
 // GET /api/tickets - Alle Tickets abrufen
 export async function GET() {
@@ -167,6 +168,13 @@ export async function POST(request: NextRequest) {
             priority: priority || "medium",
             creatorName,
             dashboardUrl,
+          });
+          await createNotification({
+            userId: assignee.user.id,
+            type: "ticket_assigned",
+            title: "Ticket zugewiesen",
+            message: `${creatorName} hat dir das Ticket "${title}" zugewiesen.`,
+            link: "/tickets",
           });
         } catch (emailError) {
           console.error(`Failed to send ticket assignment email to ${assignee.user.email}:`, emailError);

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canEdit } from "@/lib/rbac";
 import { sendTaskAssignmentNotification } from "@/lib/resend";
+import { createNotification } from "@/lib/notifications";
 
 // GET - Alle Tasks abrufen
 export async function GET() {
@@ -158,6 +159,13 @@ export async function POST(request: NextRequest) {
               priority: task.priority,
               dueDate: task.dueDate?.toISOString() || null,
               dashboardUrl,
+            });
+            await createNotification({
+              userId: assignee.userId,
+              type: "task_assigned",
+              title: "Neuer Task zugewiesen",
+              message: `${creatorName} hat dir den Task "${task.title}" zugewiesen.`,
+              link: `/tasks?taskId=${task.id}`,
             });
           }
         }

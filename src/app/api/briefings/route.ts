@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canEdit, hasFullAdminRights } from "@/lib/rbac";
 import { sendNewBriefingNotification } from "@/lib/resend";
+import { createNotification } from "@/lib/notifications";
 
 // GET - Liste aller Briefings
 export async function GET() {
@@ -169,6 +170,20 @@ export async function POST(request: Request) {
           briefingNumber: briefing.briefingNumber,
           requesterName: user.name || user.email,
           dashboardUrl,
+        });
+      }
+
+      const agenturUsersFull = await prisma.user.findMany({
+        where: { role: "agentur" },
+        select: { id: true },
+      });
+      for (const au of agenturUsersFull) {
+        await createNotification({
+          userId: au.id,
+          type: "briefing_new",
+          title: `Neue Briefing-Bestellung: #${briefing.briefingNumber}`,
+          message: `${user.name || user.email} hat das Briefing "${briefing.title}" bestellt.`,
+          link: "/briefings",
         });
       }
     } catch (emailError) {

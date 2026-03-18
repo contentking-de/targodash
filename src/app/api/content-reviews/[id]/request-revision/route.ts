@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { sendRevisionRequestNotification } from "@/lib/resend";
+import { createNotificationsForUsers } from "@/lib/notifications";
 
 export async function POST(
   _request: NextRequest,
@@ -81,6 +82,18 @@ export async function POST(
       })
     )
   );
+
+  const recipientsFull = await prisma.user.findMany({
+    where: { role: "agentur" },
+    select: { id: true },
+  });
+  await createNotificationsForUsers({
+    userIds: recipientsFull.map((u) => u.id),
+    type: "revision_request",
+    title: "Überarbeitung angefordert",
+    message: `${requestedByName} hat eine Überarbeitung für "${article.title}" angefordert. ${unresolvedComments.length} offene Kommentare.`,
+    link: `/content-check?article=${id}`,
+  });
 
   return NextResponse.json({ success: true });
 }

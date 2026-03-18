@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canEdit } from "@/lib/rbac";
 import { sendTaskCommentNotification, sendTaskMentionNotification } from "@/lib/resend";
+import { createNotification } from "@/lib/notifications";
 
 // GET - Alle Kommentare eines Tasks abrufen
 export async function GET(
@@ -140,6 +141,13 @@ export async function POST(
             authorName,
             dashboardUrl,
           });
+          await createNotification({
+            userId: assignee.user.id,
+            type: "task_comment",
+            title: `Neuer Kommentar: ${task.title}`,
+            message: `${authorName}: ${text.trim().substring(0, 200)}${text.trim().length > 200 ? "..." : ""}`,
+            link: `/tasks?taskId=${task.id}`,
+          });
           notifiedUserIds.add(assignee.user.id);
         }
       } catch (emailError) {
@@ -170,6 +178,13 @@ export async function POST(
             commentText: text.trim(),
             authorName,
             dashboardUrl,
+          });
+          await createNotification({
+            userId: mentionedUser.id,
+            type: "task_mention",
+            title: `${authorName} hat dich erwähnt`,
+            message: `In Task "${task.title}": ${text.trim().substring(0, 200)}${text.trim().length > 200 ? "..." : ""}`,
+            link: `/tasks?taskId=${task.id}`,
           });
         }
       } catch (emailError) {
