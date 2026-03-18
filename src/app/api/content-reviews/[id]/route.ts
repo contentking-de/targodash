@@ -5,7 +5,8 @@ import { sendContentReviewNotification } from "@/lib/resend";
 import { isAgentur } from "@/lib/rbac";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  draft: ["brand_review"],
+  draft: ["pm_review"],
+  pm_review: ["brand_review"],
   brand_review: ["brand_approved"],
   brand_approved: ["compliance_review"],
   compliance_review: ["compliance_approved"],
@@ -18,6 +19,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 
 // Welche Rolle bei welchem neuen Status benachrichtigt wird
 const STATUS_NOTIFY_ROLE: Record<string, string> = {
+  pm_review: "produktmanagement",
   brand_review: "brand",
   compliance_review: "compliance",
   legal_review: "legal",

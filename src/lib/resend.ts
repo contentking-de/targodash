@@ -553,6 +553,7 @@ export async function sendContentReviewNotification({
   dashboardUrl: string;
 }) {
   const statusLabels: Record<string, string> = {
+    pm_review: "Produkt Management",
     brand_review: "Brand-Check",
     compliance_review: "Compliance Review",
     legal_review: "Legal Review",
@@ -560,6 +561,7 @@ export async function sendContentReviewNotification({
   };
 
   const statusColors: Record<string, string> = {
+    pm_review: "#0891b2",
     brand_review: "#e11d48",
     compliance_review: "#d97706",
     legal_review: "#ea580c",

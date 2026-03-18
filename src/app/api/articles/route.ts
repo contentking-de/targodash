@@ -2,7 +2,6 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { isAgentur } from "@/lib/rbac";
-import { sendNewContentNotification } from "@/lib/resend";
 
 function slugify(text: string): string {
   return text
@@ -89,33 +88,6 @@ export async function POST(request: NextRequest) {
       where: { id: editorialPlanEntryId },
       data: { articleId: article.id },
     }).catch(() => {});
-  }
-
-  // Notify all ProduktManagement users about new content
-  try {
-    const pmUsers = await prisma.user.findMany({
-      where: { role: { in: ["produktmanagement", "brand"] } },
-      select: { email: true },
-    });
-
-    const baseUrl = process.env.NEXTAUTH_URL || "https://dashboard.tasketeer.com";
-    const dashboardUrl = `${baseUrl}/content-check`;
-    const creatorName = user.name || user.email;
-
-    await Promise.allSettled(
-      pmUsers.map((pmUser) =>
-        sendNewContentNotification({
-          to: pmUser.email,
-          articleTitle: title,
-          category,
-          funnelStage,
-          creatorName,
-          dashboardUrl,
-        })
-      )
-    );
-  } catch (emailError) {
-    console.error("Error sending ProduktManagement notifications:", emailError);
   }
 
   return NextResponse.json(article, { status: 201 });

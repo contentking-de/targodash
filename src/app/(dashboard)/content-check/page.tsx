@@ -53,6 +53,7 @@ interface Article {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   draft: { label: "Entwurf", color: "text-slate-700 dark:text-slate-300", bg: "bg-slate-100 dark:bg-slate-700" },
+  pm_review: { label: "Produkt Management", color: "text-cyan-700 dark:text-cyan-300", bg: "bg-cyan-100 dark:bg-cyan-900/40" },
   brand_review: { label: "Brand-Check", color: "text-rose-700 dark:text-rose-300", bg: "bg-rose-100 dark:bg-rose-900/40" },
   brand_approved: { label: "Brand OK", color: "text-rose-700 dark:text-rose-300", bg: "bg-rose-100 dark:bg-rose-900/40" },
   compliance_review: { label: "Compliance Review", color: "text-amber-700 dark:text-amber-300", bg: "bg-amber-100 dark:bg-amber-900/40" },
@@ -65,6 +66,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 
 const STATUS_FLOW = [
   "draft",
+  "pm_review",
   "brand_review",
   "brand_approved",
   "compliance_review",
@@ -76,7 +78,8 @@ const STATUS_FLOW = [
 ];
 
 const NEXT_STATUS: Record<string, { status: string; label: string; color: string }> = {
-  draft: { status: "brand_review", label: "An Brand senden", color: "bg-rose-600 hover:bg-rose-700" },
+  draft: { status: "pm_review", label: "An Produkt Management senden", color: "bg-cyan-600 hover:bg-cyan-700" },
+  pm_review: { status: "brand_review", label: "An Brand senden", color: "bg-rose-600 hover:bg-rose-700" },
   brand_review: { status: "brand_approved", label: "Brand freigeben", color: "bg-rose-600 hover:bg-rose-700" },
   brand_approved: { status: "compliance_review", label: "An Compliance senden", color: "bg-amber-600 hover:bg-amber-700" },
   compliance_review: { status: "compliance_approved", label: "Compliance freigeben", color: "bg-blue-600 hover:bg-blue-700" },
@@ -186,7 +189,7 @@ export default function ContentCheckPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Content Check</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Freigabe-Workflow: Brand-Check &rarr; Compliance &rarr; Legal &rarr; Production Ready &rarr; Published
+          Freigabe-Workflow: Entwurf &rarr; Produkt Management &rarr; Brand-Check &rarr; Compliance &rarr; Legal &rarr; Production Ready &rarr; Published
         </p>
       </div>
 
@@ -364,6 +367,8 @@ function ArticleReviewView({
 
   const getDefaultCommentRole = (status: string): "compliance" | "legal" | "produktmanagement" | "brand" => {
     switch (status) {
+      case "pm_review":
+        return "produktmanagement";
       case "brand_review":
       case "brand_approved":
         return "brand";
@@ -666,6 +671,7 @@ function ArticleReviewView({
 
     const STATUS_LABELS: Record<string, string> = {
       draft: "Entwurf",
+      pm_review: "Produkt Management",
       brand_review: "Brand-Check",
       brand_approved: "Brand freigegeben",
       compliance_review: "Compliance Review",
