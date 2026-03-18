@@ -71,19 +71,88 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
-  const { reviewStatus, htmlContent, eloxxImported } = body;
+  const { reviewStatus, htmlContent, eloxxImported, resolveRevision, claim } = body;
 
   const article = await prisma.generatedArticle.findUnique({ where: { id } });
   if (!article) {
     return NextResponse.json({ error: "Artikel nicht gefunden" }, { status: 404 });
   }
 
-  // Content-Update im Draft-Status (ohne Statuswechsel)
-  if (htmlContent !== undefined && !reviewStatus) {
-    if (article.reviewStatus !== "draft") {
+  // Claim/Unclaim
+  if (claim !== undefined && !reviewStatus) {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, name: true, email: true },
+    });
+
+    const updated = await prisma.generatedArticle.update({
+      where: { id },
+      data: claim
+        ? {
+            claimedAt: new Date(),
+            claimedByUserId: user!.id,
+            claimedByName: user!.name || user!.email,
+          }
+        : {
+            claimedAt: null,
+            claimedByUserId: null,
+            claimedByName: null,
+          },
+      include: {
+        creator: { select: { id: true, name: true, email: true } },
+        comments: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            author: { select: { id: true, name: true, email: true } },
+          },
+        },
+        statusHistory: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    return NextResponse.json(updated);
+  }
+
+  // Überarbeitung als erledigt markieren
+  if (resolveRevision !== undefined && !reviewStatus) {
+    if (!article.revisionRequestedAt) {
       return NextResponse.json(
-        { error: "Inhalt kann nur im Entwurf-Status bearbeitet werden" },
+        { error: "Keine offene Überarbeitung vorhanden" },
         { status: 400 }
+      );
+    }
+
+    const updated = await prisma.generatedArticle.update({
+      where: { id },
+      data: {
+        revisionRequestedAt: null,
+        revisionRequestedBy: null,
+      },
+      include: {
+        creator: { select: { id: true, name: true, email: true } },
+        comments: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            author: { select: { id: true, name: true, email: true } },
+          },
+        },
+        statusHistory: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    return NextResponse.json(updated);
+  }
+
+  // Content-Update durch Agentur-User (ohne Statuswechsel)
+  if (htmlContent !== undefined && !reviewStatus) {
+    if (!isAgentur(session.user.role)) {
+      return NextResponse.json(
+        { error: "Nur Agentur-User können den Inhalt bearbeiten" },
+        { status: 403 }
       );
     }
 
@@ -144,6 +213,13 @@ export async function PATCH(
   }
 
   // Status-Transition
+  if (article.revisionRequestedAt) {
+    return NextResponse.json(
+      { error: "Der Artikel kann nicht weitergereicht werden, solange eine Überarbeitung angefordert ist. Bitte zuerst die Überarbeitung als erledigt markieren." },
+      { status: 400 }
+    );
+  }
+
   const allowedTransitions = VALID_TRANSITIONS[article.reviewStatus] || [];
   if (!allowedTransitions.includes(reviewStatus)) {
     return NextResponse.json(
@@ -154,7 +230,12 @@ export async function PATCH(
     );
   }
 
-  const updateData: Record<string, unknown> = { reviewStatus };
+  const updateData: Record<string, unknown> = {
+    reviewStatus,
+    claimedAt: null,
+    claimedByUserId: null,
+    claimedByName: null,
+  };
 
   if (reviewStatus === "brand_approved") {
     updateData.brandApprovedAt = new Date();

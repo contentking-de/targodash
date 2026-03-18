@@ -613,6 +613,11 @@ model GeneratedArticle {
   legalApprovedAt      DateTime?
   eloxxImportedAt      DateTime?   // Zeitpunkt, wann in Eloxx importiert wurde
   eloxxImportedBy      String?     // E-Mail/Name des Users, der den Import markiert hat
+  revisionRequestedAt  DateTime?   // Zeitpunkt, wann eine Überarbeitung angefordert wurde
+  revisionRequestedBy  String?     // Name des Users, der die Überarbeitung angefordert hat
+  claimedAt            DateTime?   // Zeitpunkt, wann ein User den Artikel beansprucht hat
+  claimedByUserId      String?     // UserId des Users, der den Artikel bearbeitet
+  claimedByName        String?     // Anzeigename des Users, der den Artikel bearbeitet
   editorialPlanEntry   EditorialPlanEntry? @relation("EditorialPlanArticle")
   creatorId       String
   creator         User             @relation("ArticleCreator", fields: [creatorId], references: [id], onDelete: Cascade)

@@ -42,6 +42,11 @@ interface Article {
   legalApprovedAt: string | null;
   eloxxImportedAt: string | null;
   eloxxImportedBy: string | null;
+  revisionRequestedAt: string | null;
+  revisionRequestedBy: string | null;
+  claimedAt: string | null;
+  claimedByUserId: string | null;
+  claimedByName: string | null;
   creator: { id: string; name: string | null; email: string };
   comments: ArticleComment[];
   statusHistory?: ArticleStatusHistory[];
@@ -115,6 +120,7 @@ export default function ContentCheckPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const userRole = session?.user?.role;
+  const userId = session?.user?.id;
   const isAgentur = userRole === "agentur";
 
   const loadArticles = useCallback(async () => {
@@ -175,6 +181,7 @@ export default function ContentCheckPage() {
         }}
         onUpdate={(updated) => setSelectedArticle(updated)}
         isAgentur={isAgentur}
+        userId={userId}
         onDelete={async () => {
           await handleDeleteArticle(selectedArticle.id);
           setSelectedArticle(null);
@@ -307,6 +314,14 @@ export default function ContentCheckPage() {
                             )}
                           </span>
                         )}
+                        {article.claimedByName && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            {article.claimedByName}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-xs text-slate-400 dark:text-slate-500 shrink-0">
@@ -352,18 +367,27 @@ function ArticleReviewView({
   onBack,
   onUpdate,
   isAgentur,
+  userId,
   onDelete,
 }: {
   article: Article;
   onBack: () => void;
   onUpdate: (a: Article) => void;
   isAgentur: boolean;
+  userId: string | undefined;
   onDelete: () => void;
 }) {
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [eloxxUpdating, setEloxxUpdating] = useState(false);
   const [requestingRevision, setRequestingRevision] = useState(false);
+  const [resolvingRevision, setResolvingRevision] = useState(false);
+  const [claimUpdating, setClaimUpdating] = useState(false);
+
+  const hasOpenRevision = !!article.revisionRequestedAt;
+  const isClaimed = !!article.claimedAt;
+  const isClaimedByMe = isClaimed && article.claimedByUserId === userId;
+  const isClaimedByOther = isClaimed && article.claimedByUserId !== userId;
 
   const getDefaultCommentRole = (status: string): "compliance" | "legal" | "produktmanagement" | "brand" => {
     switch (status) {
@@ -396,7 +420,7 @@ function ArticleReviewView({
     setCommentRole(getDefaultCommentRole(article.reviewStatus));
   }, [article.reviewStatus]);
 
-  const isDraft = article.reviewStatus === "draft";
+  const canEdit = isAgentur;
   const [isEditing, setIsEditing] = useState(false);
   const [editHtml, setEditHtml] = useState(article.htmlContent);
   const [saving, setSaving] = useState(false);
@@ -496,6 +520,8 @@ function ArticleReviewView({
         method: "POST",
       });
       if (res.ok) {
+        const refreshRes = await fetch(`/api/content-reviews/${article.id}`);
+        if (refreshRes.ok) onUpdate(await refreshRes.json());
         alert("Überarbeitung wurde angefordert. Der Autor wurde per E-Mail benachrichtigt.");
       } else {
         const data = await res.json();
@@ -505,6 +531,38 @@ function ArticleReviewView({
       alert("Fehler beim Anfordern der Überarbeitung");
     } finally {
       setRequestingRevision(false);
+    }
+  };
+
+  const handleResolveRevision = async () => {
+    setResolvingRevision(true);
+    try {
+      const res = await fetch(`/api/content-reviews/${article.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resolveRevision: true }),
+      });
+      if (res.ok) onUpdate(await res.json());
+    } catch {
+      // Ignore
+    } finally {
+      setResolvingRevision(false);
+    }
+  };
+
+  const handleClaimToggle = async () => {
+    setClaimUpdating(true);
+    try {
+      const res = await fetch(`/api/content-reviews/${article.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ claim: !isClaimed || !isClaimedByMe }),
+      });
+      if (res.ok) onUpdate(await res.json());
+    } catch {
+      // Ignore
+    } finally {
+      setClaimUpdating(false);
     }
   };
 
@@ -1010,13 +1068,68 @@ function ArticleReviewView({
           })}
         </div>
 
+        {/* Revision Banner */}
+        {hasOpenRevision && (
+          <div className="flex items-center gap-3 mt-4 pt-3 pb-3 px-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <svg className="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                Überarbeitung angefordert
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                von {article.revisionRequestedBy} am {new Date(article.revisionRequestedAt!).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} – Content kann nicht weitergereicht werden, bis die Überarbeitung als erledigt markiert wird.
+              </p>
+            </div>
+            {isAgentur && (
+              <button
+                onClick={handleResolveRevision}
+                disabled={resolvingRevision}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors shrink-0 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {resolvingRevision ? "Wird gespeichert..." : "Überarbeitung erledigt"}
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusConfig.bg} ${statusConfig.color}`}>
             {statusConfig.label}
           </span>
+          {/* Claim */}
+          {article.reviewStatus !== "draft" && article.reviewStatus !== "published" && (
+            isClaimedByOther ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {article.claimedByName} arbeitet daran
+              </span>
+            ) : (
+              <button
+                onClick={handleClaimToggle}
+                disabled={claimUpdating}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors disabled:opacity-50 ${
+                  isClaimedByMe
+                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                    : "bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isClaimedByMe ? "M5 13l4 4L19 7" : "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"} />
+                </svg>
+                {claimUpdating ? "..." : isClaimedByMe ? "Ich arbeite daran" : "Übernehmen"}
+              </button>
+            )
+          )}
           <div className="flex-1" />
-          {unresolvedComments.length > 0 && !isAgentur && article.reviewStatus !== "draft" && article.reviewStatus !== "published" && (
+          {unresolvedComments.length > 0 && !isAgentur && !hasOpenRevision && article.reviewStatus !== "draft" && article.reviewStatus !== "published" && (
             <button
               onClick={handleRequestRevision}
               disabled={requestingRevision}
@@ -1031,8 +1144,9 @@ function ArticleReviewView({
           {nextAction && (
             <button
               onClick={() => handleStatusChange(nextAction.status)}
-              disabled={updating}
-              className={`px-4 py-2 text-sm font-medium rounded-lg text-white disabled:opacity-50 transition-colors ${nextAction.color}`}
+              disabled={updating || hasOpenRevision}
+              title={hasOpenRevision ? "Überarbeitung muss zuerst als erledigt markiert werden" : undefined}
+              className={`px-4 py-2 text-sm font-medium rounded-lg text-white disabled:opacity-50 transition-colors ${hasOpenRevision ? "bg-slate-400 cursor-not-allowed" : nextAction.color}`}
             >
               {updating ? "Bitte warten..." : nextAction.label}
             </button>
@@ -1105,9 +1219,9 @@ function ArticleReviewView({
           <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {isDraft && isEditing ? "Artikel bearbeiten" : "Artikel-Vorschau"}
+                {canEdit && isEditing ? "Artikel bearbeiten" : "Artikel-Vorschau"}
               </h2>
-              {isDraft && (
+              {canEdit && (
                 <button
                   onClick={() => setIsEditing(!isEditing)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
@@ -1124,7 +1238,7 @@ function ArticleReviewView({
               )}
             </div>
             <div className="flex items-center gap-3">
-              {isDraft && isEditing ? (
+              {canEdit && isEditing ? (
                 <>
                   {saveSuccess && (
                     <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
@@ -1166,7 +1280,7 @@ function ArticleReviewView({
             </div>
           </div>
           {/* Editor Toolbar */}
-          {isDraft && isEditing && (
+          {canEdit && isEditing && (
             <div className="flex items-center gap-1 px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30 shrink-0">
               <button onClick={() => execCommand("bold")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Fett">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"/><path d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"/></svg>
@@ -1201,7 +1315,7 @@ function ArticleReviewView({
             </div>
           )}
           <div className="flex-1 min-h-[500px] xl:min-h-0 relative">
-            {isDraft && isEditing ? (
+            {canEdit && isEditing ? (
               <ContentEditor
                 editorRef={editorRef}
                 initialHtml={article.htmlContent}

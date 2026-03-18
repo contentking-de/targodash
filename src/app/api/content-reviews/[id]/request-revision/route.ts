@@ -32,6 +32,13 @@ export async function POST(
     );
   }
 
+  if (article.revisionRequestedAt) {
+    return NextResponse.json(
+      { error: "Es wurde bereits eine Überarbeitung angefordert" },
+      { status: 400 }
+    );
+  }
+
   const unresolvedComments = article.comments.filter((c) => !c.resolved);
   if (unresolvedComments.length === 0) {
     return NextResponse.json(
@@ -45,6 +52,14 @@ export async function POST(
     select: { name: true, email: true },
   });
   const requestedByName = requestedByUser?.name || requestedByUser?.email || "Unbekannt";
+
+  await prisma.generatedArticle.update({
+    where: { id },
+    data: {
+      revisionRequestedAt: new Date(),
+      revisionRequestedBy: requestedByName,
+    },
+  });
 
   const recipients = await prisma.user.findMany({
     where: { role: "agentur" },
