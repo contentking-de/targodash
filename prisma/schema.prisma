@@ -37,6 +37,7 @@ model User {
   editorialPlanAssignments EditorialPlanAssignee[] @relation("EditorialPlanAssignee")
   generatedArticles GeneratedArticle[] @relation("ArticleCreator")
   contentComments   ContentComment[]   @relation("ContentCommentAuthor")
+  articleImages     ArticleImage[]     @relation("ArticleImageUploader")
   absences          Absence[]
   notifications     Notification[]
   createdAt     DateTime      @default(now())
@@ -625,6 +626,7 @@ model GeneratedArticle {
   creator         User             @relation("ArticleCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   comments        ContentComment[]
   statusHistory   ArticleStatusHistory[]
+  images          ArticleImage[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -633,6 +635,21 @@ model GeneratedArticle {
   @@index([category])
   @@index([reviewStatus])
   @@index([createdAt])
+}
+
+model ArticleImage {
+  id         String           @id @default(cuid())
+  articleId  String
+  article    GeneratedArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String
+  fileSize   Int
+  fileType   String
+  uploadedById String
+  uploadedBy   User           @relation("ArticleImageUploader", fields: [uploadedById], references: [id], onDelete: Cascade)
+  createdAt  DateTime         @default(now())
+
+  @@index([articleId])
 }
 
 // Inline-Kommentare für Content Review (Text-Markierung + Kommentar)

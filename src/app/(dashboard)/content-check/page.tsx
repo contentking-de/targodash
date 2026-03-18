@@ -31,6 +31,17 @@ interface ArticleComment {
   createdAt: string;
 }
 
+interface ArticleImage {
+  id: string;
+  articleId: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  fileType: string;
+  uploadedBy: { id: string; name: string | null; email: string };
+  createdAt: string;
+}
+
 interface Article {
   id: string;
   contentNumber: number;
@@ -53,6 +64,7 @@ interface Article {
   claimedByName: string | null;
   creator: { id: string; name: string | null; email: string };
   comments: ArticleComment[];
+  images?: ArticleImage[];
   statusHistory?: ArticleStatusHistory[];
   _count?: { comments: number; unresolvedComments: number; resolvedComments: number };
   createdAt: string;
@@ -406,6 +418,10 @@ function ArticleReviewView({
   const [requestingRevision, setRequestingRevision] = useState(false);
   const [resolvingRevision, setResolvingRevision] = useState(false);
   const [claimUpdating, setClaimUpdating] = useState(false);
+  const [articleImages, setArticleImages] = useState<ArticleImage[]>(article.images || []);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const hasOpenRevision = !!article.revisionRequestedAt;
   const isClaimed = !!article.claimedAt;
@@ -1026,6 +1042,48 @@ function ArticleReviewView({
     doc.save(`content-review-${slug}.pdf`);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingImages(true);
+    try {
+      const formData = new FormData();
+      for (const file of Array.from(files)) {
+        formData.append("images", file);
+      }
+
+      const res = await fetch(`/api/content-reviews/${article.id}/images`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setArticleImages((prev) => [...data.images, ...prev]);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setUploadingImages(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    try {
+      const res = await fetch(
+        `/api/content-reviews/${article.id}/images?imageId=${imageId}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        setArticleImages((prev) => prev.filter((img) => img.id !== imageId));
+      }
+    } catch {
+      // Ignore
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header with back button */}
@@ -1469,7 +1527,7 @@ function ArticleReviewView({
 
           {/* Comment list */}
           <div className="flex-1 overflow-y-auto">
-            {article.comments.length === 0 ? (
+            {article.comments.length === 0 && articleImages.length === 0 ? (
               <div className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
                 <svg className="w-10 h-10 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -1517,9 +1575,123 @@ function ArticleReviewView({
                 )}
               </div>
             )}
+
+            {/* Vorgeschlagene Bilder */}
+            <div className="border-t border-slate-200 dark:border-slate-700">
+              <div className="px-4 py-2 bg-slate-50 dark:bg-slate-700/30 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Vorgeschlagene Bilder ({articleImages.length})
+                </span>
+                {isAgentur && (
+                  <label className={`cursor-pointer text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium normal-case transition-colors ${uploadingImages ? "opacity-50 pointer-events-none" : ""}`}>
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImages}
+                    />
+                    {uploadingImages ? (
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Hochladen...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Bild hinzufügen
+                      </span>
+                    )}
+                  </label>
+                )}
+              </div>
+
+              {articleImages.length === 0 ? (
+                <div className="p-4 text-center text-xs text-slate-400 dark:text-slate-500">
+                  {isAgentur ? "Noch keine Bilder vorgeschlagen. Klicke oben auf \"Bild hinzufügen\"." : "Noch keine Bilder vorgeschlagen."}
+                </div>
+              ) : (
+                <div className="p-3 grid grid-cols-2 gap-2">
+                  {articleImages.map((img) => (
+                    <div key={img.id} className="group relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
+                      <button
+                        onClick={() => setImagePreview(img.fileUrl)}
+                        className="block w-full"
+                      >
+                        <img
+                          src={img.fileUrl}
+                          alt={img.fileName}
+                          className="w-full h-24 object-cover"
+                        />
+                      </button>
+                      <div className="p-1.5">
+                        <p className="text-[10px] text-slate-600 dark:text-slate-400 truncate" title={img.fileName}>
+                          {img.fileName}
+                        </p>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500">
+                          {img.uploadedBy.name || img.uploadedBy.email} &middot; {new Date(img.createdAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
+                        </p>
+                      </div>
+                      {isAgentur && (
+                        <button
+                          onClick={() => handleDeleteImage(img.id)}
+                          className="absolute top-1 right-1 p-1 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
+                          title="Bild entfernen"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      {imagePreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-8"
+          onClick={() => setImagePreview(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <img src={imagePreview} alt="Vorschau" className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+            <button
+              onClick={() => setImagePreview(null)}
+              className="absolute -top-3 -right-3 p-2 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <a
+              href={imagePreview}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute -bottom-3 right-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Vollbild öffnen
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

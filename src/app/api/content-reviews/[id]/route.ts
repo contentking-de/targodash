@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendContentReviewNotification, sendRecheckReadyNotification } from "@/lib/resend";
 import { isAgentur } from "@/lib/rbac";
 import { createNotificationsForUsers } from "@/lib/notifications";
+import { del } from "@vercel/blob";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   draft: ["pm_review"],
@@ -62,6 +63,12 @@ export async function GET(
       },
       statusHistory: {
         orderBy: { createdAt: "asc" },
+      },
+      images: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          uploadedBy: { select: { id: true, name: true, email: true } },
+        },
       },
     },
   });
@@ -413,6 +420,11 @@ export async function DELETE(
     where: { articleId: id },
     data: { contentPushed: false, contentPushedAt: null, status: "planned" },
   });
+
+  // Delete article images from Vercel Blob
+  const articleImages = await prisma.articleImage.findMany({ where: { articleId: id } });
+  await Promise.allSettled(articleImages.map((img) => del(img.fileUrl)));
+  await prisma.articleImage.deleteMany({ where: { articleId: id } });
 
   await prisma.articleStatusHistory.deleteMany({ where: { articleId: id } });
   await prisma.contentComment.deleteMany({ where: { articleId: id } });
