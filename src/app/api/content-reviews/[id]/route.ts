@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { sendContentReviewNotification } from "@/lib/resend";
+import { sendContentReviewNotification, sendRecheckReadyNotification } from "@/lib/resend";
 import { isAgentur } from "@/lib/rbac";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -23,6 +23,18 @@ const STATUS_NOTIFY_ROLE: Record<string, string> = {
   brand_review: "brand",
   compliance_review: "compliance",
   legal_review: "legal",
+  production_ready: "dev",
+};
+
+// Welche Rolle für den aktuellen Review-Step zuständig ist (inkl. _approved Zustände)
+const STATUS_RESPONSIBLE_ROLE: Record<string, string> = {
+  pm_review: "produktmanagement",
+  brand_review: "brand",
+  brand_approved: "brand",
+  compliance_review: "compliance",
+  compliance_approved: "compliance",
+  legal_review: "legal",
+  legal_approved: "legal",
   production_ready: "dev",
 };
 
@@ -124,6 +136,10 @@ export async function PATCH(
       );
     }
 
+    const recheckComments = await prisma.contentComment.findMany({
+      where: { articleId: id, recheckAfterRevision: true },
+    });
+
     const updated = await prisma.generatedArticle.update({
       where: { id },
       data: {
@@ -143,6 +159,37 @@ export async function PATCH(
         },
       },
     });
+
+    if (recheckComments.length > 0) {
+      const resolvedByUser = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { name: true, email: true },
+      });
+      const resolvedByName = resolvedByUser?.name || resolvedByUser?.email || "Unbekannt";
+
+      const responsibleRole = STATUS_RESPONSIBLE_ROLE[article.reviewStatus];
+      const notifyUsers = responsibleRole
+        ? await prisma.user.findMany({
+            where: { role: responsibleRole },
+            select: { email: true },
+          })
+        : [];
+
+      const baseUrl = process.env.NEXTAUTH_URL || "https://dashboard.tasketeer.com";
+      const dashboardUrl = `${baseUrl}/content-check`;
+
+      await Promise.allSettled(
+        notifyUsers.map((user) =>
+          sendRecheckReadyNotification({
+            to: user.email,
+            articleTitle: article.title,
+            resolvedByName,
+            recheckCommentCount: recheckComments.length,
+            dashboardUrl,
+          })
+        )
+      );
+    }
 
     return NextResponse.json(updated);
   }

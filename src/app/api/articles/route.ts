@@ -69,6 +69,12 @@ export async function POST(request: NextRequest) {
     slug = `${slug}-${Date.now()}`;
   }
 
+  const lastArticle = await prisma.generatedArticle.findFirst({
+    orderBy: { contentNumber: "desc" },
+    select: { contentNumber: true },
+  });
+  const nextNumber = (lastArticle?.contentNumber ?? 0) + 1;
+
   const article = await prisma.generatedArticle.create({
     data: {
       title,
@@ -79,6 +85,7 @@ export async function POST(request: NextRequest) {
       htmlContent,
       wordCount: countWords(htmlContent),
       creatorId: user.id,
+      contentNumber: nextNumber,
     },
     include: { creator: { select: { id: true, name: true, email: true } } },
   });

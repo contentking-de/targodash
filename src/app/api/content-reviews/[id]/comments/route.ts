@@ -42,7 +42,7 @@ export async function POST(
 
   const { id } = await params;
   const body = await request.json();
-  const { selectedText, commentText, role } = body;
+  const { selectedText, commentText, role, changeAndForward, recheckAfterRevision } = body;
 
   if (!selectedText || !commentText || !role) {
     return NextResponse.json(
@@ -65,6 +65,8 @@ export async function POST(
       selectedText,
       commentText,
       role,
+      changeAndForward: changeAndForward === true,
+      recheckAfterRevision: recheckAfterRevision === true,
     },
     include: {
       author: { select: { id: true, name: true, email: true } },

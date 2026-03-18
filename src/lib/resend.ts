@@ -688,6 +688,72 @@ export async function sendRevisionRequestNotification({
   return data;
 }
 
+export async function sendRecheckReadyNotification({
+  to,
+  articleTitle,
+  resolvedByName,
+  recheckCommentCount,
+  dashboardUrl,
+}: {
+  to: string;
+  articleTitle: string;
+  resolvedByName: string;
+  recheckCommentCount: number;
+  dashboardUrl: string;
+}) {
+  const { data, error } = await resend.emails.send({
+    from: EMAIL_FROM,
+    to: to,
+    subject: `Überarbeitung abgeschlossen – bereit für Recheck: ${articleTitle}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <div style="display: inline-block; background-color: #8b5cf6; border-radius: 50%; padding: 12px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </div>
+            </div>
+            <h1 style="color: #18181b; font-size: 24px; margin: 0 0 16px 0; text-align: center;">Überarbeitung abgeschlossen</h1>
+            <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+              <strong>${resolvedByName}</strong> hat die Überarbeitung für den folgenden Artikel abgeschlossen.
+              Es gibt <strong>${recheckCommentCount} Kommentar${recheckCommentCount === 1 ? "" : "e"}</strong> mit Recheck-Anforderung, die erneut geprüft werden sollten.
+            </p>
+            <div style="background-color: #f4f4f5; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <p style="color: #18181b; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">${articleTitle}</p>
+              <span style="display: inline-block; padding: 4px 10px; background-color: #8b5cf620; color: #8b5cf6; font-size: 12px; border-radius: 4px; font-weight: 500;">
+                Bereit für Recheck
+              </span>
+            </div>
+            <div style="text-align: center;">
+              <a href="${dashboardUrl}" style="display: inline-block; background-color: #8b5cf6; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                Artikel erneut prüfen
+              </a>
+            </div>
+            <p style="color: #a1a1aa; font-size: 14px; margin: 24px 0 0 0;">
+              Diese E-Mail wurde automatisch vom SEO Dashboard versendet.
+            </p>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+
+  if (error) {
+    console.error("Failed to send recheck ready notification email:", error);
+    throw error;
+  }
+
+  return data;
+}
+
 export async function sendNewContentNotification({
   to,
   articleTitle,
