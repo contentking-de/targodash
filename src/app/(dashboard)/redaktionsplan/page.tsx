@@ -276,6 +276,7 @@ export default function RedaktionsplanPage() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterRatgeberCategory, setFilterRatgeberCategory] = useState<string>("all");
   const [filterFunnel, setFilterFunnel] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Form state
   const [formTitle, setFormTitle] = useState("");
@@ -317,14 +318,20 @@ export default function RedaktionsplanPage() {
   }, [fetchEntries, fetchUsers]);
 
   const filteredEntries = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
     return entries.filter((e) => {
       if (filterStatus !== "all" && e.status !== filterStatus) return false;
       if (filterCategory !== "all" && e.category !== filterCategory) return false;
       if (filterRatgeberCategory !== "all" && e.ratgeberCategory !== filterRatgeberCategory) return false;
       if (filterFunnel !== "all" && e.funnel !== filterFunnel) return false;
+      if (query) {
+        const haystack = [e.title, e.description, e.url, e.category, e.ratgeberCategory, e.funnel, ...e.assignees.map(a => a.name || a.email)]
+          .filter(Boolean).join(" ").toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
       return true;
     });
-  }, [entries, filterStatus, filterCategory, filterRatgeberCategory, filterFunnel]);
+  }, [entries, filterStatus, filterCategory, filterRatgeberCategory, filterFunnel, searchQuery]);
 
   const entriesByDate = useMemo(() => {
     const map: Record<string, EditorialEntry[]> = {};
@@ -608,6 +615,28 @@ export default function RedaktionsplanPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Suche nach Titel, Beschreibung..."
+            className="pl-9 pr-8 py-2 w-64 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
