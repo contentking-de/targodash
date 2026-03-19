@@ -323,6 +323,7 @@ export function Sidebar() {
   const isRedaktionsplanActive = pathname === "/redaktionsplan";
   const isContentActive = pathname === "/content";
   const isContentCheckActive = pathname === "/content-check";
+  const isCustomerJourneyActive = pathname === "/customer-journey";
   const isSuperAgentActive = pathname === "/superagent";
   const isSEOHelperActive = pathname.startsWith("/seo-helper");
   
@@ -476,6 +477,19 @@ export function Sidebar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Content Check
+            </Link>
+            <Link
+              href="/customer-journey"
+              className={`group flex gap-x-3 rounded-lg p-3 text-sm font-medium transition-all duration-200 ${
+                isCustomerJourneyActive
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              Customer Journey
             </Link>
           </div>
 

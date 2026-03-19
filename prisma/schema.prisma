@@ -562,6 +562,13 @@ model EditorialPlanEntry {
   creator           User                      @relation("EditorialPlanCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   assignees         EditorialPlanAssignee[]
   files             EditorialPlanFile[]
+  
+  // Customer Journey Mapping (KI-basierte Zuordnung)
+  journeyPhase      String?                   // bewusstsein, orientierung, planung, objektsuche, abschluss
+  journeyConfidence Float?                    // 0.0 bis 1.0
+  journeyReasoning  String?                   // Kurze Begründung der Zuordnung
+  journeyMappedAt   DateTime?                 // Zeitpunkt der letzten Zuordnung
+  
   createdAt         DateTime                  @default(now())
   updatedAt         DateTime                  @updatedAt
 
@@ -571,6 +578,7 @@ model EditorialPlanEntry {
   @@index([category])
   @@index([ratgeberCategory])
   @@index([funnel])
+  @@index([journeyPhase])
 }
 
 model EditorialPlanFile {
