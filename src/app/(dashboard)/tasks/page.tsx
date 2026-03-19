@@ -1730,14 +1730,41 @@ export default function TasksPage() {
 
   useEffect(() => {
     const taskId = searchParams.get("taskId");
-    if (taskId && tasks.length > 0 && !selectedTask) {
-      const task = tasks.find((t) => t.id === taskId);
-      if (task) {
-        setSelectedTask(task);
-        router.replace("/tasks", { scroll: false });
+    if (!taskId) return;
+
+    let cancelled = false;
+
+    async function openTaskFromUrl() {
+      try {
+        const [tasksRes, taskRes] = await Promise.all([
+          fetch("/api/tasks"),
+          fetch(`/api/tasks/${taskId}`),
+        ]);
+        if (cancelled) return;
+
+        if (tasksRes.ok) {
+          const tasksData = await tasksRes.json();
+          setTasks(tasksData.tasks || []);
+        }
+
+        if (taskRes.ok) {
+          const taskData = await taskRes.json();
+          if (!cancelled && taskData.task) {
+            setSelectedTask(taskData.task);
+          }
+        }
+      } catch (error) {
+        console.error("Error opening task from notification:", error);
+      } finally {
+        if (!cancelled) {
+          router.replace("/tasks", { scroll: false });
+        }
       }
     }
-  }, [searchParams, tasks, selectedTask, router]);
+
+    openTaskFromUrl();
+    return () => { cancelled = true; };
+  }, [searchParams, router]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = tasks.find((t) => t.id === event.active.id);
