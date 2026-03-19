@@ -290,7 +290,7 @@ export default function CustomerJourneyPage() {
               </button>
             </div>
           )}
-          {unmappedEntries.length > 0 && hasMappedEntries && (
+          {isAgenturUser && unmappedEntries.length > 0 && hasMappedEntries && (
             <button
               onClick={() => classifyEntries("unmapped")}
               disabled={classifying}
@@ -311,6 +311,7 @@ export default function CustomerJourneyPage() {
               )}
             </button>
           )}
+          {isAgenturUser && (
           <button
             onClick={() => classifyEntries(hasMappedEntries ? "all" : "all")}
             disabled={classifying || entries.length === 0}
@@ -330,6 +331,7 @@ export default function CustomerJourneyPage() {
               </>
             )}
           </button>
+          )}
         </div>
       </div>
 
@@ -359,13 +361,15 @@ export default function CustomerJourneyPage() {
               {unmappedEntries.length > 3 && ` und ${unmappedEntries.length - 3} weitere`}
             </p>
           </div>
-          <button
-            onClick={() => classifyEntries("unmapped")}
-            disabled={classifying}
-            className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Jetzt zuordnen
-          </button>
+          {isAgenturUser && (
+            <button
+              onClick={() => classifyEntries("unmapped")}
+              disabled={classifying}
+              className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Jetzt zuordnen
+            </button>
+          )}
         </div>
       )}
 
