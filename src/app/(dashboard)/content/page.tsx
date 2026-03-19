@@ -100,8 +100,9 @@ function ContentPageInner() {
   const [title, setTitle] = useState(searchParams.get("title") || "");
   const [funnelStage, setFunnelStage] = useState(searchParams.get("funnel") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [customAudience, setCustomAudience] = useState(false);
+  const [targetAudiences, setTargetAudiences] = useState<string[]>([]);
+  const [customAudience, setCustomAudience] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const [editorialPlanEntryId] = useState(searchParams.get("editorialPlanEntryId") || "");
   const [fromRedaktionsplan] = useState(!!searchParams.get("editorialPlanEntryId"));
 
@@ -109,6 +110,8 @@ function ContentPageInner() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [htmlContent, setHtmlContent] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
@@ -119,6 +122,13 @@ function ContentPageInner() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const previewRef = useRef<HTMLIFrameElement>(null);
+
+  const extractMeta = useCallback((html: string) => {
+    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    setMetaTitle(titleMatch ? titleMatch[1].trim() : "");
+    const descMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([\s\S]*?)["']/i);
+    setMetaDescription(descMatch ? descMatch[1].trim() : "");
+  }, []);
 
   const loadArticles = useCallback(async () => {
     setLoadingArticles(true);
@@ -136,13 +146,15 @@ function ContentPageInner() {
   }, []);
 
   const handleGenerate = async () => {
-    if (!title || !funnelStage || !category || !targetAudience) {
+    if (!title || !funnelStage || !category || targetAudiences.length === 0) {
       setError("Bitte alle Felder ausfüllen.");
       return;
     }
 
     setError("");
     setHtmlContent("");
+    setMetaTitle("");
+    setMetaDescription("");
     setIsGenerating(true);
     setSavedMessage("");
 
@@ -152,7 +164,7 @@ function ContentPageInner() {
       const res = await fetch("/api/generate-article", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, funnelStage, category, targetAudience, contentType }),
+        body: JSON.stringify({ title, funnelStage, category, targetAudience: targetAudiences.join(", "), contentType }),
         signal: abortControllerRef.current.signal,
       });
 
@@ -205,6 +217,8 @@ function ContentPageInner() {
           }
         }
       }
+
+      extractMeta(accumulated);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         // User cancelled
@@ -236,9 +250,11 @@ function ContentPageInner() {
           title,
           funnelStage,
           category,
-          targetAudience,
+          targetAudience: targetAudiences.join(", "),
           htmlContent,
           contentType,
+          metaTitle: metaTitle || undefined,
+          metaDescription: metaDescription || undefined,
           editorialPlanEntryId: editorialPlanEntryId || undefined,
         }),
       });
@@ -405,7 +421,11 @@ function ContentPageInner() {
                             setTitle(data.title);
                             setFunnelStage(data.funnelStage);
                             setCategory(data.category);
-                            setTargetAudience(data.targetAudience);
+                            setTargetAudiences(
+                              data.targetAudience
+                                ? data.targetAudience.split(", ").filter(Boolean)
+                                : []
+                            );
                           });
                       }}
                       className="p-2 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -550,54 +570,112 @@ function ContentPageInner() {
 
             {/* Zielgruppe */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                Zielgruppe
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Zielgruppe(n)
               </label>
-              {customAudience ? (
-                <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                {ZIELGRUPPEN.map((z) => {
+                  const selected = targetAudiences.includes(z);
+                  return (
+                    <button
+                      key={z}
+                      type="button"
+                      disabled={isGenerating}
+                      onClick={() =>
+                        setTargetAudiences((prev) =>
+                          selected ? prev.filter((a) => a !== z) : [...prev, z]
+                        )
+                      }
+                      className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
+                        selected
+                          ? "bg-blue-100 dark:bg-blue-900/40 border-blue-400 dark:border-blue-600 text-blue-700 dark:text-blue-300 ring-1 ring-blue-400 dark:ring-blue-600"
+                          : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500"
+                      } ${isGenerating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    >
+                      {selected && (
+                        <svg className="w-3.5 h-3.5 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                      {z}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  disabled={isGenerating}
+                  onClick={() => setShowCustomInput(!showCustomInput)}
+                  className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
+                    showCustomInput
+                      ? "bg-slate-100 dark:bg-slate-700 border-slate-400 dark:border-slate-500 text-slate-700 dark:text-slate-300"
+                      : "border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500"
+                  } ${isGenerating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  + Eigene
+                </button>
+              </div>
+              {showCustomInput && (
+                <div className="flex gap-2 mt-2">
                   <input
                     type="text"
-                    value={targetAudience}
-                    onChange={(e) => setTargetAudience(e.target.value)}
-                    placeholder="Eigene Zielgruppe eingeben..."
-                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    value={customAudience}
+                    onChange={(e) => setCustomAudience(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && customAudience.trim()) {
+                        e.preventDefault();
+                        if (!targetAudiences.includes(customAudience.trim())) {
+                          setTargetAudiences((prev) => [...prev, customAudience.trim()]);
+                        }
+                        setCustomAudience("");
+                      }
+                    }}
+                    placeholder="Eigene Zielgruppe eingeben + Enter"
+                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                     disabled={isGenerating}
                   />
                   <button
+                    type="button"
                     onClick={() => {
-                      setCustomAudience(false);
-                      setTargetAudience("");
+                      if (customAudience.trim() && !targetAudiences.includes(customAudience.trim())) {
+                        setTargetAudiences((prev) => [...prev, customAudience.trim()]);
+                      }
+                      setCustomAudience("");
                     }}
-                    className="px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                    disabled={isGenerating}
+                    disabled={isGenerating || !customAudience.trim()}
+                    className="px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    Vorschläge
+                    Hinzufügen
                   </button>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <select
-                    value={targetAudience}
-                    onChange={(e) => {
-                      if (e.target.value === "__custom__") {
-                        setCustomAudience(true);
-                        setTargetAudience("");
-                      } else {
-                        setTargetAudience(e.target.value);
-                      }
-                    }}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                    disabled={isGenerating}
-                  >
-                    <option value="">Bitte auswählen...</option>
-                    {ZIELGRUPPEN.map((z) => (
-                      <option key={z} value={z}>
-                        {z}
-                      </option>
+              )}
+              {targetAudiences.filter((a) => !ZIELGRUPPEN.includes(a)).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {targetAudiences
+                    .filter((a) => !ZIELGRUPPEN.includes(a))
+                    .map((a) => (
+                      <span
+                        key={a}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border border-violet-300 dark:border-violet-700"
+                      >
+                        {a}
+                        <button
+                          type="button"
+                          onClick={() => setTargetAudiences((prev) => prev.filter((x) => x !== a))}
+                          className="hover:text-red-500 transition-colors"
+                          disabled={isGenerating}
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
                     ))}
-                    <option value="__custom__">Eigene Zielgruppe eingeben...</option>
-                  </select>
                 </div>
+              )}
+              {targetAudiences.length > 0 && (
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
+                  {targetAudiences.length} Zielgruppe{targetAudiences.length !== 1 ? "n" : ""} ausgewählt
+                </p>
               )}
             </div>
           </div>
@@ -624,7 +702,7 @@ function ContentPageInner() {
             ) : (
               <button
                 onClick={handleGenerate}
-                disabled={!title || !funnelStage || !category || !targetAudience}
+                disabled={!title || !funnelStage || !category || targetAudiences.length === 0}
                 className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -711,6 +789,31 @@ function ContentPageInner() {
               </div>
             )}
           </div>
+
+          {/* SEO Meta-Daten */}
+          {(metaTitle || metaDescription) && !isGenerating && (
+            <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30 space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">SEO Meta-Daten</p>
+              {metaTitle && (
+                <div>
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Title Tag</span>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 font-medium leading-snug">{metaTitle}</p>
+                  <span className={`text-[10px] ${metaTitle.length >= 50 && metaTitle.length <= 60 ? "text-emerald-500" : "text-amber-500"}`}>
+                    {metaTitle.length} Zeichen {metaTitle.length < 50 ? "(zu kurz, ideal: 50–60)" : metaTitle.length > 60 ? "(zu lang, ideal: 50–60)" : "(optimal)"}
+                  </span>
+                </div>
+              )}
+              {metaDescription && (
+                <div>
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Meta Description</span>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-snug">{metaDescription}</p>
+                  <span className={`text-[10px] ${metaDescription.length >= 140 && metaDescription.length <= 160 ? "text-emerald-500" : "text-amber-500"}`}>
+                    {metaDescription.length} Zeichen {metaDescription.length < 140 ? "(zu kurz, ideal: 140–160)" : metaDescription.length > 160 ? "(zu lang, ideal: 140–160)" : "(optimal)"}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex-1 min-h-[600px] xl:min-h-0 relative">
             {htmlContent ? (

@@ -51,6 +51,8 @@ interface Article {
   category: string;
   targetAudience: string;
   htmlContent: string;
+  metaTitle: string | null;
+  metaDescription: string | null;
   wordCount: number;
   reviewStatus: string;
   complianceApprovedAt: string | null;
@@ -1110,6 +1112,33 @@ function ArticleReviewView({
           </div>
         </div>
       </div>
+
+      {/* SEO Meta-Daten */}
+      {(article.metaTitle || article.metaDescription) && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 px-6 py-4 space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">SEO Meta-Daten</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {article.metaTitle && (
+              <div>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Title Tag</span>
+                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium leading-snug mt-0.5">{article.metaTitle}</p>
+                <span className={`text-[10px] ${article.metaTitle.length >= 50 && article.metaTitle.length <= 60 ? "text-emerald-500" : "text-amber-500"}`}>
+                  {article.metaTitle.length} Zeichen {article.metaTitle.length < 50 ? "(zu kurz, ideal: 50–60)" : article.metaTitle.length > 60 ? "(zu lang, ideal: 50–60)" : "(optimal)"}
+                </span>
+              </div>
+            )}
+            {article.metaDescription && (
+              <div>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Meta Description</span>
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-snug mt-0.5">{article.metaDescription}</p>
+                <span className={`text-[10px] ${article.metaDescription.length >= 140 && article.metaDescription.length <= 160 ? "text-emerald-500" : "text-amber-500"}`}>
+                  {article.metaDescription.length} Zeichen {article.metaDescription.length < 140 ? "(zu kurz, ideal: 140–160)" : article.metaDescription.length > 160 ? "(zu lang, ideal: 140–160)" : "(optimal)"}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Status Progress Bar */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">

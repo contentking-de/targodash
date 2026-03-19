@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { title, funnelStage, category, targetAudience, htmlContent, editorialPlanEntryId } = body;
+  const { title, funnelStage, category, targetAudience, htmlContent, metaTitle, metaDescription, editorialPlanEntryId } = body;
 
   if (!title || !funnelStage || !category || !targetAudience || !htmlContent) {
     return NextResponse.json(
@@ -83,6 +83,8 @@ export async function POST(request: NextRequest) {
       category,
       targetAudience,
       htmlContent,
+      metaTitle: metaTitle || null,
+      metaDescription: metaDescription || null,
       wordCount: countWords(htmlContent),
       creatorId: user.id,
       contentNumber: nextNumber,

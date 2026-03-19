@@ -609,6 +609,8 @@ model GeneratedArticle {
   category        String
   targetAudience  String
   htmlContent     String           @db.Text
+  metaTitle       String?          @db.Text
+  metaDescription String?          @db.Text
   wordCount       Int              @default(0)
   reviewStatus    String           @default("draft") // draft, brand_review, brand_approved, compliance_review, compliance_approved, legal_review, legal_approved, production_ready, published
   brandApprovedAt      DateTime?
