@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface EditorialEntry {
@@ -77,7 +78,17 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   published: { label: "Veröffentlicht", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" },
 };
 
+interface ResearchSuggestion {
+  title: string;
+  description: string;
+  ratgeberCategory: string;
+  funnel: string;
+  reasoning: string;
+}
+
 export default function CustomerJourneyPage() {
+  const { data: session } = useSession();
+  const isAgenturUser = session?.user?.role === "agentur";
   const [entries, setEntries] = useState<EditorialEntry[]>([]);
   const [phases, setPhases] = useState<JourneyPhase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +98,14 @@ export default function CustomerJourneyPage() {
   const [viewMode, setViewMode] = useState<"funnel" | "list">("funnel");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  const [researchPhaseId, setResearchPhaseId] = useState<string | null>(null);
+  const [researchLoading, setResearchLoading] = useState(false);
+  const [researchSuggestions, setResearchSuggestions] = useState<ResearchSuggestion[]>([]);
+  const [researchPhaseName, setResearchPhaseName] = useState("");
+  const [showResearchModal, setShowResearchModal] = useState(false);
+  const [savingIndices, setSavingIndices] = useState<Set<number>>(new Set());
+  const [savedIndices, setSavedIndices] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchData();
@@ -139,6 +158,71 @@ export default function CustomerJourneyPage() {
       setClassifying(false);
     }
   }, []);
+
+  const startResearch = useCallback(async (phaseId: string) => {
+    setResearchPhaseId(phaseId);
+    setResearchLoading(true);
+    setResearchSuggestions([]);
+    setSavingIndices(new Set());
+    setSavedIndices(new Set());
+    setShowResearchModal(true);
+
+    try {
+      const res = await fetch("/api/customer-journey/research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phaseId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Research fehlgeschlagen");
+      }
+      const data = await res.json();
+      setResearchSuggestions(data.suggestions);
+      setResearchPhaseName(data.phaseName);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Themenresearch fehlgeschlagen");
+      setShowResearchModal(false);
+    } finally {
+      setResearchLoading(false);
+    }
+  }, []);
+
+  const saveToEditorialPlan = useCallback(async (suggestion: ResearchSuggestion, index: number) => {
+    setSavingIndices((prev) => new Set(prev).add(index));
+    try {
+      const res = await fetch("/api/editorial-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: suggestion.title,
+          description: suggestion.description,
+          ratgeberCategory: suggestion.ratgeberCategory,
+          funnel: suggestion.funnel,
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+          assigneeIds: [],
+        }),
+      });
+      if (!res.ok) throw new Error("Speichern fehlgeschlagen");
+      setSavedIndices((prev) => new Set(prev).add(index));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Speichern fehlgeschlagen");
+    } finally {
+      setSavingIndices((prev) => {
+        const next = new Set(prev);
+        next.delete(index);
+        return next;
+      });
+    }
+  }, []);
+
+  const saveAllToEditorialPlan = useCallback(async () => {
+    for (let i = 0; i < researchSuggestions.length; i++) {
+      if (!savedIndices.has(i)) {
+        await saveToEditorialPlan(researchSuggestions[i], i);
+      }
+    }
+  }, [researchSuggestions, savedIndices, saveToEditorialPlan]);
 
   const filteredEntries = mappedEntries.filter((entry) => {
     if (filterCategory !== "all" && entry.category !== filterCategory) return false;
@@ -440,6 +524,28 @@ export default function CustomerJourneyPage() {
                   <div className="flex items-center gap-2">
                     <span className={`text-2xl font-bold ${config.color}`}>{phaseEntries.length}</span>
                     <span className="text-sm text-slate-500 dark:text-slate-400">Artikel</span>
+                    {isAgenturUser && (
+                      <button
+                        onClick={() => startResearch(phase.id)}
+                        disabled={researchLoading && researchPhaseId === phase.id}
+                        className="ml-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 rounded-lg transition-colors disabled:opacity-50"
+                        title="KI-Themenresearch für neue Content-Ideen"
+                      >
+                        {researchLoading && researchPhaseId === phase.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-violet-600 dark:border-violet-300"></div>
+                            Research...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                            </svg>
+                            Themen-Research
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
                 {phaseEntries.length > 0 && (
@@ -514,6 +620,146 @@ export default function CustomerJourneyPage() {
                   })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Research Modal */}
+      {showResearchModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => !researchLoading && setShowResearchModal(false)}>
+          <div
+            className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                    <svg className="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                    </svg>
+                    Themen-Research: {researchPhaseName || "..."}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    KI-generierte Content-Vorschläge basierend auf vorhandenen Artikeln
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowResearchModal(false)}
+                  disabled={researchLoading}
+                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 disabled:opacity-50"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {researchLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600 mb-4"></div>
+                  <p className="text-slate-600 dark:text-slate-400 font-medium">KI analysiert bestehende Inhalte...</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">Neue Themenvorschläge werden generiert</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {researchSuggestions.map((suggestion, index) => {
+                    const isSaving = savingIndices.has(index);
+                    const isSaved = savedIndices.has(index);
+                    return (
+                      <div
+                        key={index}
+                        className={`rounded-lg border p-4 transition-all ${
+                          isSaved
+                            ? "border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-900/10"
+                            : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm text-slate-900 dark:text-white">{suggestion.title}</h4>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{suggestion.description}</p>
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                              {suggestion.ratgeberCategory && (
+                                <span className="px-2 py-0.5 rounded text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300">
+                                  {suggestion.ratgeberCategory}
+                                </span>
+                              )}
+                              {suggestion.funnel && (
+                                <span className="px-2 py-0.5 rounded text-xs bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300">
+                                  {suggestion.funnel}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-2 italic">{suggestion.reasoning}</p>
+                          </div>
+                          <button
+                            onClick={() => saveToEditorialPlan(suggestion, index)}
+                            disabled={isSaving || isSaved}
+                            className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                              isSaved
+                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                : "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                            }`}
+                          >
+                            {isSaving ? (
+                              <>
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                Speichern...
+                              </>
+                            ) : isSaved ? (
+                              <>
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Gespeichert
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Speichern
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {!researchLoading && researchSuggestions.length > 0 && (
+              <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {savedIndices.size} von {researchSuggestions.length} gespeichert
+                </p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowResearchModal(false)}
+                    className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  >
+                    Schließen
+                  </button>
+                  {savedIndices.size < researchSuggestions.length && (
+                    <button
+                      onClick={saveAllToEditorialPlan}
+                      disabled={savingIndices.size > 0}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Alle speichern
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
