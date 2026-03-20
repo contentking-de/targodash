@@ -473,6 +473,13 @@ function ArticleReviewView({
   const styleBlocksRef = useRef("");
   const cleanedOriginalRef = useRef("");
 
+  // SEO Meta inline editing
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [editMetaTitle, setEditMetaTitle] = useState(article.metaTitle || "");
+  const [editMetaDescription, setEditMetaDescription] = useState(article.metaDescription || "");
+  const [savingMeta, setSavingMeta] = useState(false);
+  const [saveMetaSuccess, setSaveMetaSuccess] = useState(false);
+
   useEffect(() => {
     setEditHtml(article.htmlContent);
     editHtmlRef.current = article.htmlContent;
@@ -482,6 +489,12 @@ function ArticleReviewView({
     // Store cleaned version for comparison
     cleanedOriginalRef.current = "";
   }, [article.htmlContent]);
+
+  useEffect(() => {
+    setEditMetaTitle(article.metaTitle || "");
+    setEditMetaDescription(article.metaDescription || "");
+    setEditingMeta(false);
+  }, [article.metaTitle, article.metaDescription]);
 
   const hasUnsavedChanges = cleanedOriginalRef.current
     ? editHtml !== cleanedOriginalRef.current
@@ -512,6 +525,29 @@ function ArticleReviewView({
       // Ignore
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveMeta = async () => {
+    setSavingMeta(true);
+    setSaveMetaSuccess(false);
+    try {
+      const res = await fetch(`/api/content-reviews/${article.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ metaTitle: editMetaTitle, metaDescription: editMetaDescription }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        onUpdate(updated);
+        setEditingMeta(false);
+        setSaveMetaSuccess(true);
+        setTimeout(() => setSaveMetaSuccess(false), 2000);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setSavingMeta(false);
     }
   };
 
@@ -1114,29 +1150,106 @@ function ArticleReviewView({
       </div>
 
       {/* SEO Meta-Daten */}
-      {(article.metaTitle || article.metaDescription) && (
+      {(article.metaTitle || article.metaDescription || isAgentur) && (
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 px-6 py-4 space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">SEO Meta-Daten</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {article.metaTitle && (
-              <div>
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Title Tag</span>
-                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium leading-snug mt-0.5">{article.metaTitle}</p>
-                <span className={`text-[10px] ${article.metaTitle.length >= 50 && article.metaTitle.length <= 60 ? "text-emerald-500" : "text-amber-500"}`}>
-                  {article.metaTitle.length} Zeichen {article.metaTitle.length < 50 ? "(zu kurz, ideal: 50–60)" : article.metaTitle.length > 60 ? "(zu lang, ideal: 50–60)" : "(optimal)"}
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">SEO Meta-Daten</p>
+            <div className="flex items-center gap-2">
+              {saveMetaSuccess && (
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Gespeichert
                 </span>
-              </div>
-            )}
-            {article.metaDescription && (
-              <div>
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Meta Description</span>
-                <p className="text-sm text-slate-700 dark:text-slate-300 leading-snug mt-0.5">{article.metaDescription}</p>
-                <span className={`text-[10px] ${article.metaDescription.length >= 140 && article.metaDescription.length <= 160 ? "text-emerald-500" : "text-amber-500"}`}>
-                  {article.metaDescription.length} Zeichen {article.metaDescription.length < 140 ? "(zu kurz, ideal: 140–160)" : article.metaDescription.length > 160 ? "(zu lang, ideal: 140–160)" : "(optimal)"}
-                </span>
-              </div>
-            )}
+              )}
+              {isAgentur && !editingMeta && (
+                <button
+                  onClick={() => setEditingMeta(true)}
+                  className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Bearbeiten
+                </button>
+              )}
+            </div>
           </div>
+          {editingMeta && isAgentur ? (
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Title Tag</label>
+                <input
+                  type="text"
+                  value={editMetaTitle}
+                  onChange={(e) => setEditMetaTitle(e.target.value)}
+                  placeholder="Title Tag eingeben..."
+                  className="mt-0.5 w-full px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                />
+                <span className={`text-[10px] ${editMetaTitle.length >= 50 && editMetaTitle.length <= 60 ? "text-emerald-500" : editMetaTitle.length === 0 ? "text-slate-400" : "text-amber-500"}`}>
+                  {editMetaTitle.length} Zeichen {editMetaTitle.length > 0 && (editMetaTitle.length < 50 ? "(zu kurz, ideal: 50–60)" : editMetaTitle.length > 60 ? "(zu lang, ideal: 50–60)" : "(optimal)")}
+                </span>
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Meta Description</label>
+                <textarea
+                  value={editMetaDescription}
+                  onChange={(e) => setEditMetaDescription(e.target.value)}
+                  placeholder="Meta Description eingeben..."
+                  rows={2}
+                  className="mt-0.5 w-full px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                />
+                <span className={`text-[10px] ${editMetaDescription.length >= 140 && editMetaDescription.length <= 160 ? "text-emerald-500" : editMetaDescription.length === 0 ? "text-slate-400" : "text-amber-500"}`}>
+                  {editMetaDescription.length} Zeichen {editMetaDescription.length > 0 && (editMetaDescription.length < 140 ? "(zu kurz, ideal: 140–160)" : editMetaDescription.length > 160 ? "(zu lang, ideal: 140–160)" : "(optimal)")}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={handleSaveMeta}
+                  disabled={savingMeta}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {savingMeta ? "Speichere..." : "Speichern"}
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingMeta(false);
+                    setEditMetaTitle(article.metaTitle || "");
+                    setEditMetaDescription(article.metaDescription || "");
+                  }}
+                  disabled={savingMeta}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {article.metaTitle && (
+                <div>
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Title Tag</span>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 font-medium leading-snug mt-0.5">{article.metaTitle}</p>
+                  <span className={`text-[10px] ${article.metaTitle.length >= 50 && article.metaTitle.length <= 60 ? "text-emerald-500" : "text-amber-500"}`}>
+                    {article.metaTitle.length} Zeichen {article.metaTitle.length < 50 ? "(zu kurz, ideal: 50–60)" : article.metaTitle.length > 60 ? "(zu lang, ideal: 50–60)" : "(optimal)"}
+                  </span>
+                </div>
+              )}
+              {article.metaDescription && (
+                <div>
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Meta Description</span>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-snug mt-0.5">{article.metaDescription}</p>
+                  <span className={`text-[10px] ${article.metaDescription.length >= 140 && article.metaDescription.length <= 160 ? "text-emerald-500" : "text-amber-500"}`}>
+                    {article.metaDescription.length} Zeichen {article.metaDescription.length < 140 ? "(zu kurz, ideal: 140–160)" : article.metaDescription.length > 160 ? "(zu lang, ideal: 140–160)" : "(optimal)"}
+                  </span>
+                </div>
+              )}
+              {!article.metaTitle && !article.metaDescription && isAgentur && (
+                <p className="text-xs text-slate-400 dark:text-slate-500 italic col-span-2">Keine SEO Meta-Daten vorhanden – klicke &quot;Bearbeiten&quot; um welche hinzuzufügen.</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

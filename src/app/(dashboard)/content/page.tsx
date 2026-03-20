@@ -791,27 +791,35 @@ function ContentPageInner() {
           </div>
 
           {/* SEO Meta-Daten */}
-          {(metaTitle || metaDescription) && !isGenerating && (
+          {(metaTitle || metaDescription || htmlContent) && !isGenerating && (
             <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30 space-y-2">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">SEO Meta-Daten</p>
-              {metaTitle && (
-                <div>
-                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Title Tag</span>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 font-medium leading-snug">{metaTitle}</p>
-                  <span className={`text-[10px] ${metaTitle.length >= 50 && metaTitle.length <= 60 ? "text-emerald-500" : "text-amber-500"}`}>
-                    {metaTitle.length} Zeichen {metaTitle.length < 50 ? "(zu kurz, ideal: 50–60)" : metaTitle.length > 60 ? "(zu lang, ideal: 50–60)" : "(optimal)"}
-                  </span>
-                </div>
-              )}
-              {metaDescription && (
-                <div>
-                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Meta Description</span>
-                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-snug">{metaDescription}</p>
-                  <span className={`text-[10px] ${metaDescription.length >= 140 && metaDescription.length <= 160 ? "text-emerald-500" : "text-amber-500"}`}>
-                    {metaDescription.length} Zeichen {metaDescription.length < 140 ? "(zu kurz, ideal: 140–160)" : metaDescription.length > 160 ? "(zu lang, ideal: 140–160)" : "(optimal)"}
-                  </span>
-                </div>
-              )}
+              <div>
+                <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Title Tag</label>
+                <input
+                  type="text"
+                  value={metaTitle}
+                  onChange={(e) => setMetaTitle(e.target.value)}
+                  placeholder="Title Tag eingeben..."
+                  className="mt-0.5 w-full px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                />
+                <span className={`text-[10px] ${metaTitle.length >= 50 && metaTitle.length <= 60 ? "text-emerald-500" : metaTitle.length === 0 ? "text-slate-400" : "text-amber-500"}`}>
+                  {metaTitle.length} Zeichen {metaTitle.length > 0 && (metaTitle.length < 50 ? "(zu kurz, ideal: 50–60)" : metaTitle.length > 60 ? "(zu lang, ideal: 50–60)" : "(optimal)")}
+                </span>
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Meta Description</label>
+                <textarea
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  placeholder="Meta Description eingeben..."
+                  rows={2}
+                  className="mt-0.5 w-full px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                />
+                <span className={`text-[10px] ${metaDescription.length >= 140 && metaDescription.length <= 160 ? "text-emerald-500" : metaDescription.length === 0 ? "text-slate-400" : "text-amber-500"}`}>
+                  {metaDescription.length} Zeichen {metaDescription.length > 0 && (metaDescription.length < 140 ? "(zu kurz, ideal: 140–160)" : metaDescription.length > 160 ? "(zu lang, ideal: 140–160)" : "(optimal)")}
+                </span>
+              </div>
             </div>
           )}
 

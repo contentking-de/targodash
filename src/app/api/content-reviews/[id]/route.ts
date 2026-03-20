@@ -91,7 +91,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
-  const { reviewStatus, htmlContent, eloxxImported, resolveRevision, claim } = body;
+  const { reviewStatus, htmlContent, metaTitle, metaDescription, eloxxImported, resolveRevision, claim } = body;
 
   const article = await prisma.generatedArticle.findUnique({ where: { id } });
   if (!article) {
@@ -217,7 +217,7 @@ export async function PATCH(
   }
 
   // Content-Update durch Agentur-User (ohne Statuswechsel)
-  if (htmlContent !== undefined && !reviewStatus) {
+  if ((htmlContent !== undefined || metaTitle !== undefined || metaDescription !== undefined) && !reviewStatus) {
     if (!isAgentur(session.user.role)) {
       return NextResponse.json(
         { error: "Nur Agentur-User können den Inhalt bearbeiten" },
@@ -225,12 +225,25 @@ export async function PATCH(
       );
     }
 
-    const plainText = htmlContent.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-    const wordCount = plainText ? plainText.split(/\s+/).length : 0;
+    const data: Record<string, unknown> = {};
+
+    if (htmlContent !== undefined) {
+      const plainText = htmlContent.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      data.htmlContent = htmlContent;
+      data.wordCount = plainText ? plainText.split(/\s+/).length : 0;
+    }
+
+    if (metaTitle !== undefined) {
+      data.metaTitle = metaTitle || null;
+    }
+
+    if (metaDescription !== undefined) {
+      data.metaDescription = metaDescription || null;
+    }
 
     const updated = await prisma.generatedArticle.update({
       where: { id },
-      data: { htmlContent, wordCount },
+      data,
       include: {
         creator: { select: { id: true, name: true, email: true } },
         comments: {
