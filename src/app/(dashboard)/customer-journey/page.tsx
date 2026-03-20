@@ -424,7 +424,11 @@ export default function CustomerJourneyPage() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number, name: string) => [`${value} Artikel`, name]}
+                      formatter={(value: number, name: string, props: { payload?: { value: number } }) => {
+                        const total = phases.reduce((sum, p) => sum + (groupedByPhase[p.id]?.length ?? 0), 0);
+                        const pct = total > 0 ? ((value / total) * 100).toFixed(1) : "0";
+                        return [`${pct} %`, name];
+                      }}
                       contentStyle={{
                         backgroundColor: "var(--color-slate-800, #1e293b)",
                         border: "none",
@@ -432,6 +436,8 @@ export default function CustomerJourneyPage() {
                         color: "#fff",
                         fontSize: "12px",
                       }}
+                      itemStyle={{ color: "#fff" }}
+                      labelStyle={{ color: "#cbd5e1" }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
