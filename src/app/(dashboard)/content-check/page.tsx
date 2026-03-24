@@ -1561,6 +1561,20 @@ function ArticleReviewView({
                 className="w-full h-full absolute inset-0 border-0"
                 sandbox="allow-same-origin"
                 title="Artikel-Vorschau"
+                onLoad={() => {
+                  const doc = iframeRef.current?.contentDocument;
+                  if (!doc) return;
+                  doc.addEventListener("click", (e) => {
+                    const anchor = (e.target as HTMLElement).closest("a");
+                    if (!anchor) return;
+                    const href = anchor.getAttribute("href");
+                    if (href?.startsWith("#")) {
+                      e.preventDefault();
+                      const target = doc.querySelector(href) || doc.getElementById(href.slice(1));
+                      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                  });
+                }}
               />
             )}
           </div>
