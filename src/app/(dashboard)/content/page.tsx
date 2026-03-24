@@ -52,6 +52,12 @@ const ZIELGRUPPEN = [
   "Selbstständige",
   "Familien",
   "Investoren",
+  "Singles",
+  "Beamte",
+  "Immobilienkäufer",
+  "Mieter",
+  "Vermieter",
+  "Kapitalanleger",
 ];
 
 interface SavedArticle {
