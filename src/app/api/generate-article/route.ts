@@ -72,7 +72,13 @@ CSS-Klassen die du verwenden sollst:
 
 Awareness: Grundlagen erklären, Begriffe einführen, viele Erklärungen, geduldiger Ton
 Consideration: Optionen vergleichen, Vor-/Nachteile, Tabellen, Rechenbeispiele, sachlicher Ton
-Decision: Handlungsimpulse, letzte Unsicherheiten nehmen, klare nächste Schritte, motivierender Ton`;
+Decision: Handlungsimpulse, letzte Unsicherheiten nehmen, klare nächste Schritte, motivierender Ton
+
+## HINWEIS BEI RECHENBEISPIELEN UND TABELLEN MIT PREISEN/ZINSSÄTZEN
+
+Wenn du Tabellen, Rechenbeispiele oder Beispielrechnungen mit konkreten Preisen, Beträgen oder Zinssätzen einfügst, ergänze IMMER direkt unterhalb der Tabelle oder des Rechenbeispiels folgenden Hinweissatz als <p> mit class="example-disclaimer" in kursiver Schrift:
+
+"Hinweis: Es handelt sich hier um eine exemplarische und fiktive Beispielrechnung mit angenommenen Werten und Zinsdaten. Preise und Zinssätze können je nach Marktsituation variieren."`;
 
 const LEXIKON_SYSTEM_PROMPT = `Du bist ein professioneller Content-Autor für die TARGOBANK und schreibst ausschließlich im offiziellen TARGOBANK Markenstil. Du erstellst SEO-optimierte Lexikon-Artikel (Glossar-Einträge) zum Thema Baufinanzierung und Immobilien als vollständige HTML-Dokumente.
 
@@ -161,7 +167,13 @@ Decision: Handlungsimpulse, letzte Unsicherheiten nehmen, klare nächste Schritt
 - Fachbegriffe werden beim ersten Auftreten erklärt
 - Es geht um EINEN konkreten Begriff, nicht um ein breites Thema
 - Der Artikel soll als "beste Antwort" auf die Google-Suche nach dem Begriff dienen
-- Verwandte Begriffe am Ende verlinken (als <a>-Tags, auch wenn die Seiten noch nicht existieren)`;
+- Verwandte Begriffe am Ende verlinken (als <a>-Tags, auch wenn die Seiten noch nicht existieren)
+
+## HINWEIS BEI RECHENBEISPIELEN UND TABELLEN MIT PREISEN/ZINSSÄTZEN
+
+Wenn du Tabellen, Rechenbeispiele oder Beispielrechnungen mit konkreten Preisen, Beträgen oder Zinssätzen einfügst, ergänze IMMER direkt unterhalb der Tabelle oder des Rechenbeispiels folgenden Hinweissatz als <p> mit class="example-disclaimer" in kursiver Schrift:
+
+"Hinweis: Es handelt sich hier um eine exemplarische und fiktive Beispielrechnung mit angenommenen Werten und Zinsdaten. Preise und Zinssätze können je nach Marktsituation variieren."`;
 
 export async function POST(request: NextRequest) {
   const session = await auth();

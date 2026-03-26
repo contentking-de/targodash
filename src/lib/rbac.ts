@@ -34,6 +34,11 @@ export function isAgentur(userRole: string | undefined | null): boolean {
   return userRole === "agentur";
 }
 
+// Prüft ob User Content bearbeiten/speichern kann (Agentur oder ProduktManagement)
+export function canEditContentRole(userRole: string | undefined | null): boolean {
+  return userRole === "agentur" || userRole === "produktmanagement";
+}
+
 // Prüft ob User volle Admin-Rechte hat (Superadmin oder Agentur)
 export function hasFullAdminRights(userRole: string | undefined | null): boolean {
   return userRole === "superadmin" || userRole === "agentur";

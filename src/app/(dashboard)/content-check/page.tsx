@@ -142,6 +142,7 @@ export default function ContentCheckPage() {
   const userRole = session?.user?.role;
   const userId = session?.user?.id;
   const isAgentur = userRole === "agentur";
+  const canEditContent = userRole === "agentur" || userRole === "produktmanagement";
 
   const loadArticles = useCallback(async () => {
     try {
@@ -216,6 +217,7 @@ export default function ContentCheckPage() {
         }}
         onUpdate={(updated) => setSelectedArticle(updated)}
         isAgentur={isAgentur}
+        canEditContent={canEditContent}
         userId={userId}
         onDelete={async () => {
           await handleDeleteArticle(selectedArticle.id);
@@ -404,6 +406,7 @@ function ArticleReviewView({
   onBack,
   onUpdate,
   isAgentur,
+  canEditContent,
   userId,
   onDelete,
 }: {
@@ -411,6 +414,7 @@ function ArticleReviewView({
   onBack: () => void;
   onUpdate: (a: Article) => void;
   isAgentur: boolean;
+  canEditContent: boolean;
   userId: string | undefined;
   onDelete: () => void;
 }) {
@@ -463,7 +467,7 @@ function ArticleReviewView({
     setCommentRole(getDefaultCommentRole(article.reviewStatus));
   }, [article.reviewStatus]);
 
-  const canEdit = isAgentur;
+  const canEdit = canEditContent;
   const [isEditing, setIsEditing] = useState(false);
   const [editHtml, setEditHtml] = useState(article.htmlContent);
   const [saving, setSaving] = useState(false);
@@ -472,6 +476,7 @@ function ArticleReviewView({
   const editHtmlRef = useRef(article.htmlContent);
   const styleBlocksRef = useRef("");
   const cleanedOriginalRef = useRef("");
+  const isHighlightingRef = useRef(false);
 
   // SEO Meta inline editing
   const [editingMeta, setEditingMeta] = useState(false);
@@ -504,8 +509,21 @@ function ArticleReviewView({
     setSaving(true);
     setSaveSuccess(false);
     try {
-      // Re-inject the original style blocks before the edited body content
-      const bodyContent = editHtmlRef.current;
+      // Strip any comment highlight marks before saving
+      let bodyContent = editHtmlRef.current;
+      if (editorRef.current) {
+        const clone = editorRef.current.cloneNode(true) as HTMLElement;
+        clone.querySelectorAll(".content-check-highlight").forEach((mark) => {
+          const parent = mark.parentNode;
+          if (parent) {
+            while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+            parent.removeChild(mark);
+            parent.normalize();
+          }
+        });
+        bodyContent = clone.innerHTML;
+      }
+
       const fullHtml = styleBlocksRef.current
         ? styleBlocksRef.current + "\n" + bodyContent
         : bodyContent;
@@ -554,6 +572,7 @@ function ArticleReviewView({
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleEditorInput = useCallback(() => {
+    if (isHighlightingRef.current) return;
     if (editorRef.current) {
       editHtmlRef.current = editorRef.current.innerHTML;
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -755,29 +774,43 @@ function ArticleReviewView({
 
   // Highlight selected text from a comment inside the iframe
   const highlightInIframe = useCallback((text: string, commentId: string) => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!iframeDoc) return;
+    let targetDoc: Document;
+    let rootEl: HTMLElement;
+
+    if (isEditing && editorRef.current) {
+      isHighlightingRef.current = true;
+      targetDoc = document;
+      rootEl = editorRef.current;
+    } else {
+      const iframe = iframeRef.current;
+      if (!iframe) return;
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
+      targetDoc = iframeDoc;
+      rootEl = iframeDoc.body;
+    }
 
     // Remove previous highlights
-    iframeDoc.querySelectorAll(".content-check-highlight").forEach((el) => {
+    rootEl.querySelectorAll(".content-check-highlight").forEach((el) => {
       const parent = el.parentNode;
       if (parent) {
-        parent.replaceChild(iframeDoc.createTextNode(el.textContent || ""), el);
+        parent.replaceChild(targetDoc.createTextNode(el.textContent || ""), el);
         parent.normalize();
       }
     });
 
     if (activeCommentId === commentId) {
       setActiveCommentId(null);
+      if (isEditing) {
+        requestAnimationFrame(() => { isHighlightingRef.current = false; });
+      }
       return;
     }
 
     setActiveCommentId(commentId);
 
-    const walker = iframeDoc.createTreeWalker(
-      iframeDoc.body,
+    const walker = targetDoc.createTreeWalker(
+      rootEl,
       NodeFilter.SHOW_TEXT,
       null
     );
@@ -786,11 +819,11 @@ function ArticleReviewView({
     while ((node = walker.nextNode())) {
       const idx = (node.textContent || "").indexOf(text);
       if (idx >= 0) {
-        const range = iframeDoc.createRange();
+        const range = targetDoc.createRange();
         range.setStart(node, idx);
         range.setEnd(node, idx + text.length);
 
-        const mark = iframeDoc.createElement("mark");
+        const mark = targetDoc.createElement("mark");
         mark.className = "content-check-highlight";
         mark.style.cssText = "background: #fbbf24; padding: 2px 0; border-radius: 2px; scroll-margin-top: 80px;";
         range.surroundContents(mark);
@@ -798,7 +831,11 @@ function ArticleReviewView({
         break;
       }
     }
-  }, [activeCommentId]);
+
+    if (isEditing) {
+      requestAnimationFrame(() => { isHighlightingRef.current = false; });
+    }
+  }, [activeCommentId, isEditing]);
 
   const handleDownloadPdf = () => {
     const doc = new jsPDF();
@@ -1150,7 +1187,7 @@ function ArticleReviewView({
       </div>
 
       {/* SEO Meta-Daten */}
-      {(article.metaTitle || article.metaDescription || isAgentur) && (
+      {(article.metaTitle || article.metaDescription || canEditContent) && (
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 px-6 py-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">SEO Meta-Daten</p>
@@ -1163,7 +1200,7 @@ function ArticleReviewView({
                   Gespeichert
                 </span>
               )}
-              {isAgentur && !editingMeta && (
+              {canEditContent && !editingMeta && (
                 <button
                   onClick={() => setEditingMeta(true)}
                   className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 transition-colors"
@@ -1176,7 +1213,7 @@ function ArticleReviewView({
               )}
             </div>
           </div>
-          {editingMeta && isAgentur ? (
+          {editingMeta && canEditContent ? (
             <div className="space-y-3">
               <div>
                 <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Title Tag</label>
@@ -1245,7 +1282,7 @@ function ArticleReviewView({
                   </span>
                 </div>
               )}
-              {!article.metaTitle && !article.metaDescription && isAgentur && (
+              {!article.metaTitle && !article.metaDescription && canEditContent && (
                 <p className="text-xs text-slate-400 dark:text-slate-500 italic col-span-2">Keine SEO Meta-Daten vorhanden – klicke &quot;Bearbeiten&quot; um welche hinzuzufügen.</p>
               )}
             </div>
@@ -1310,7 +1347,7 @@ function ArticleReviewView({
                 von {article.revisionRequestedBy} am {new Date(article.revisionRequestedAt!).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} – Content kann nicht weitergereicht werden, bis die Überarbeitung als erledigt markiert wird.
               </p>
             </div>
-            {isAgentur && (
+            {canEditContent && (
               <button
                 onClick={handleResolveRevision}
                 disabled={resolvingRevision}
@@ -1357,7 +1394,7 @@ function ArticleReviewView({
             )
           )}
           <div className="flex-1" />
-          {unresolvedComments.length > 0 && !isAgentur && !hasOpenRevision && article.reviewStatus !== "draft" && article.reviewStatus !== "published" && (
+          {unresolvedComments.length > 0 && !canEditContent && !hasOpenRevision && article.reviewStatus !== "draft" && article.reviewStatus !== "published" && (
             <button
               onClick={handleRequestRevision}
               disabled={requestingRevision}
@@ -1451,7 +1488,7 @@ function ArticleReviewView({
               </h2>
               {canEdit && (
                 <button
-                  onClick={() => setIsEditing(!isEditing)}
+                  onClick={() => { setActiveCommentId(null); setIsEditing(!isEditing); }}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
                     isEditing
                       ? "border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"

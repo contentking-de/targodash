@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { sendContentReviewNotification, sendRecheckReadyNotification } from "@/lib/resend";
-import { isAgentur } from "@/lib/rbac";
+import { isAgentur, canEditContentRole } from "@/lib/rbac";
 import { createNotificationsForUsers } from "@/lib/notifications";
 import { del } from "@vercel/blob";
 
@@ -216,11 +216,11 @@ export async function PATCH(
     return NextResponse.json(updated);
   }
 
-  // Content-Update durch Agentur-User (ohne Statuswechsel)
+  // Content-Update durch Agentur- oder ProduktManagement-User (ohne Statuswechsel)
   if ((htmlContent !== undefined || metaTitle !== undefined || metaDescription !== undefined) && !reviewStatus) {
-    if (!isAgentur(session.user.role)) {
+    if (!canEditContentRole(session.user.role)) {
       return NextResponse.json(
-        { error: "Nur Agentur-User können den Inhalt bearbeiten" },
+        { error: "Nur Agentur- und ProduktManagement-User können den Inhalt bearbeiten" },
         { status: 403 }
       );
     }
