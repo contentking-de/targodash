@@ -469,6 +469,8 @@ function ArticleReviewView({
 
   const canEdit = canEditContent;
   const [isEditing, setIsEditing] = useState(false);
+  const [isHtmlView, setIsHtmlView] = useState(false);
+  const [htmlSource, setHtmlSource] = useState("");
   const [editHtml, setEditHtml] = useState(article.htmlContent);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -509,19 +511,24 @@ function ArticleReviewView({
     setSaving(true);
     setSaveSuccess(false);
     try {
-      // Strip any comment highlight marks before saving
-      let bodyContent = editHtmlRef.current;
-      if (editorRef.current) {
-        const clone = editorRef.current.cloneNode(true) as HTMLElement;
-        clone.querySelectorAll(".content-check-highlight").forEach((mark) => {
-          const parent = mark.parentNode;
-          if (parent) {
-            while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
-            parent.removeChild(mark);
-            parent.normalize();
-          }
-        });
-        bodyContent = clone.innerHTML;
+      let bodyContent: string;
+
+      if (isHtmlView) {
+        bodyContent = htmlSource;
+      } else {
+        bodyContent = editHtmlRef.current;
+        if (editorRef.current) {
+          const clone = editorRef.current.cloneNode(true) as HTMLElement;
+          clone.querySelectorAll(".content-check-highlight").forEach((mark) => {
+            const parent = mark.parentNode;
+            if (parent) {
+              while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+              parent.removeChild(mark);
+              parent.normalize();
+            }
+          });
+          bodyContent = clone.innerHTML;
+        }
       }
 
       const fullHtml = styleBlocksRef.current
@@ -1484,11 +1491,11 @@ function ArticleReviewView({
           <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {canEdit && isEditing ? "Artikel bearbeiten" : "Artikel-Vorschau"}
+                {canEdit && isEditing ? (isHtmlView ? "HTML-Quellcode" : "Artikel bearbeiten") : "Artikel-Vorschau"}
               </h2>
               {canEdit && (
                 <button
-                  onClick={() => { setActiveCommentId(null); setIsEditing(!isEditing); }}
+                  onClick={() => { setActiveCommentId(null); setIsEditing(!isEditing); setIsHtmlView(false); }}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
                     isEditing
                       ? "border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -1547,50 +1554,94 @@ function ArticleReviewView({
           {/* Editor Toolbar */}
           {canEdit && isEditing && (
             <div className="flex items-center gap-1 px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30 shrink-0">
-              <button onClick={() => execCommand("bold")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Fett">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"/><path d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"/></svg>
-              </button>
-              <button onClick={() => execCommand("italic")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Kursiv">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
-              </button>
-              <button onClick={() => execCommand("underline")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Unterstrichen">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 3v7a6 6 0 006 6 6 6 0 006-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
-              </button>
-              <div className="w-px h-5 bg-slate-200 dark:bg-slate-600 mx-1.5" />
-              <button onClick={() => execCommand("formatBlock", "h2")} className="px-2.5 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors" title="Überschrift 2">
-                H2
-              </button>
-              <button onClick={() => execCommand("formatBlock", "h3")} className="px-2.5 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors" title="Überschrift 3">
-                H3
-              </button>
-              <button onClick={() => execCommand("formatBlock", "p")} className="px-2.5 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 transition-colors" title="Absatz">
-                P
-              </button>
-              <div className="w-px h-5 bg-slate-200 dark:bg-slate-600 mx-1.5" />
-              <button onClick={() => execCommand("insertUnorderedList")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Aufzählung">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
-              </button>
-              <button onClick={() => execCommand("insertOrderedList")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Nummerierte Liste">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><text x="2" y="8" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">1</text><text x="2" y="14" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">2</text><text x="2" y="20" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">3</text></svg>
-              </button>
-              <div className="w-px h-5 bg-slate-200 dark:bg-slate-600 mx-1.5" />
-              <button onClick={() => execCommand("removeFormat")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Formatierung entfernen">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M17 10L3 10M21 6L3 6M15.5 14L3 14M11.5 18L3 18"/><line x1="19" y1="12" x2="13" y2="20" strokeWidth={2}/><line x1="13" y1="12" x2="19" y2="20" strokeWidth={2}/></svg>
+              {!isHtmlView && (
+                <>
+                  <button onClick={() => execCommand("bold")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Fett">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"/><path d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"/></svg>
+                  </button>
+                  <button onClick={() => execCommand("italic")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Kursiv">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+                  </button>
+                  <button onClick={() => execCommand("underline")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Unterstrichen">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 3v7a6 6 0 006 6 6 6 0 006-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+                  </button>
+                  <div className="w-px h-5 bg-slate-200 dark:bg-slate-600 mx-1.5" />
+                  <button onClick={() => execCommand("formatBlock", "h2")} className="px-2.5 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors" title="Überschrift 2">
+                    H2
+                  </button>
+                  <button onClick={() => execCommand("formatBlock", "h3")} className="px-2.5 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors" title="Überschrift 3">
+                    H3
+                  </button>
+                  <button onClick={() => execCommand("formatBlock", "p")} className="px-2.5 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 transition-colors" title="Absatz">
+                    P
+                  </button>
+                  <div className="w-px h-5 bg-slate-200 dark:bg-slate-600 mx-1.5" />
+                  <button onClick={() => execCommand("insertUnorderedList")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Aufzählung">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+                  </button>
+                  <button onClick={() => execCommand("insertOrderedList")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Nummerierte Liste">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><text x="2" y="8" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">1</text><text x="2" y="14" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">2</text><text x="2" y="20" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">3</text></svg>
+                  </button>
+                  <div className="w-px h-5 bg-slate-200 dark:bg-slate-600 mx-1.5" />
+                  <button onClick={() => execCommand("removeFormat")} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Formatierung entfernen">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M17 10L3 10M21 6L3 6M15.5 14L3 14M11.5 18L3 18"/><line x1="19" y1="12" x2="13" y2="20" strokeWidth={2}/><line x1="13" y1="12" x2="19" y2="20" strokeWidth={2}/></svg>
+                  </button>
+                  <div className="w-px h-5 bg-slate-200 dark:bg-slate-600 mx-1.5" />
+                </>
+              )}
+              <button
+                onClick={() => {
+                  if (!isHtmlView) {
+                    setHtmlSource(editorRef.current?.innerHTML || editHtmlRef.current);
+                  } else {
+                    if (editorRef.current) {
+                      editorRef.current.innerHTML = htmlSource;
+                      editHtmlRef.current = htmlSource;
+                      setEditHtml(htmlSource);
+                    }
+                  }
+                  setIsHtmlView(!isHtmlView);
+                }}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                  isHtmlView
+                    ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
+                    : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300"
+                }`}
+                title={isHtmlView ? "Zurück zum visuellen Editor" : "HTML-Quellcode bearbeiten"}
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+                {isHtmlView ? "Visual" : "HTML"}
               </button>
             </div>
           )}
           <div className="flex-1 min-h-[500px] xl:min-h-0 relative">
             {canEdit && isEditing ? (
-              <ContentEditor
-                editorRef={editorRef}
-                initialHtml={article.htmlContent}
-                onInput={handleEditorInput}
-                onInitialized={(cleanHtml) => {
-                  cleanedOriginalRef.current = cleanHtml;
-                  editHtmlRef.current = cleanHtml;
-                  setEditHtml(cleanHtml);
-                }}
-              />
+              isHtmlView ? (
+                <textarea
+                  value={htmlSource}
+                  onChange={(e) => {
+                    setHtmlSource(e.target.value);
+                    editHtmlRef.current = e.target.value;
+                    setEditHtml(e.target.value);
+                  }}
+                  className="absolute inset-0 w-full h-full p-4 font-mono text-sm text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 border-0 resize-none focus:outline-none focus:ring-0"
+                  spellCheck={false}
+                />
+              ) : (
+                <ContentEditor
+                  editorRef={editorRef}
+                  initialHtml={article.htmlContent}
+                  onInput={handleEditorInput}
+                  onInitialized={(cleanHtml) => {
+                    cleanedOriginalRef.current = cleanHtml;
+                    editHtmlRef.current = cleanHtml;
+                    setEditHtml(cleanHtml);
+                  }}
+                />
+              )
             ) : (
               <iframe
                 ref={iframeRef}
