@@ -479,6 +479,7 @@ function ArticleReviewView({
   const styleBlocksRef = useRef("");
   const cleanedOriginalRef = useRef("");
   const isHighlightingRef = useRef(false);
+  const saveTriggeredRef = useRef(false);
 
   // SEO Meta inline editing
   const [editingMeta, setEditingMeta] = useState(false);
@@ -488,13 +489,22 @@ function ArticleReviewView({
   const [saveMetaSuccess, setSaveMetaSuccess] = useState(false);
 
   useEffect(() => {
-    setEditHtml(article.htmlContent);
-    editHtmlRef.current = article.htmlContent;
-    // Extract style blocks so we can re-inject them on save
     const styleMatches = article.htmlContent.match(/<style[^>]*>[\s\S]*?<\/style>/gi);
     styleBlocksRef.current = styleMatches ? styleMatches.join("\n") : "";
-    // Store cleaned version for comparison
-    cleanedOriginalRef.current = "";
+
+    if (saveTriggeredRef.current) {
+      saveTriggeredRef.current = false;
+      if (editorRef.current) {
+        const currentContent = editorRef.current.innerHTML;
+        cleanedOriginalRef.current = currentContent;
+        editHtmlRef.current = currentContent;
+        setEditHtml(currentContent);
+      }
+    } else {
+      setEditHtml(article.htmlContent);
+      editHtmlRef.current = article.htmlContent;
+      cleanedOriginalRef.current = "";
+    }
   }, [article.htmlContent]);
 
   useEffect(() => {
@@ -542,6 +552,7 @@ function ArticleReviewView({
       });
       if (res.ok) {
         const updated = await res.json();
+        saveTriggeredRef.current = true;
         onUpdate(updated);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
