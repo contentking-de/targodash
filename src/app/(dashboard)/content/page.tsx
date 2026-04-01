@@ -54,6 +54,7 @@ const ZIELGRUPPEN = [
   "Investoren",
   "Singles",
   "Beamte",
+  "Bauherren",
   "Immobilienkäufer",
   "Mieter",
   "Vermieter",
