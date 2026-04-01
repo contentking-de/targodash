@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
+import ExcelJS from "exceljs";
 
 // --- Types ---
 
@@ -74,6 +75,26 @@ interface Article {
 
 // --- Constants ---
 
+const RATGEBER_CATEGORIES = [
+  "Erstfinanzierung",
+  "Kapitalanlage",
+  "Immobilie",
+  "Anschlussfinanzierung",
+  "Modernisierung",
+  "Studien und Whitepaper",
+  "Lexikon",
+  "Checklisten für Käufer und Inhaber",
+];
+
+const LEXIKON_SUBCATEGORIES = [
+  "Finanzierungsbegriffe",
+  "Immobilienbegriffe",
+  "Rechtliche Begriffe",
+  "Versicherungsbegriffe",
+  "Steuerbegriffe",
+  "Allgemeine Bankbegriffe",
+];
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   draft: { label: "Entwurf", color: "text-slate-700 dark:text-slate-300", bg: "bg-slate-100 dark:bg-slate-700" },
   pm_review: { label: "Produkt Management", color: "text-cyan-700 dark:text-cyan-300", bg: "bg-cyan-100 dark:bg-cyan-900/40" },
@@ -136,6 +157,7 @@ export default function ContentCheckPage() {
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [commentFilter, setCommentFilter] = useState<string>("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -193,8 +215,21 @@ export default function ContentCheckPage() {
     }
   };
 
+  const isLexikonArticle = (category: string) =>
+    category === "Lexikon" || LEXIKON_SUBCATEGORIES.includes(category);
+
+  const categoryCount = (cat: string) => {
+    if (cat === "Lexikon") return articles.filter((a) => isLexikonArticle(a.category)).length;
+    return articles.filter((a) => a.category === cat).length;
+  };
+
   const filteredArticles = articles
     .filter((a) => filterStatus === "all" || a.reviewStatus === filterStatus)
+    .filter((a) => {
+      if (filterCategory === "all") return true;
+      if (filterCategory === "Lexikon") return isLexikonArticle(a.category);
+      return a.category === filterCategory;
+    })
     .filter((a) => {
       if (commentFilter === "all") return true;
       const total = a._count?.comments ?? 0;
@@ -205,6 +240,77 @@ export default function ContentCheckPage() {
       if (commentFilter === "resolved") return resolved > 0 && unresolved === 0;
       return true;
     });
+
+  const [exporting, setExporting] = useState(false);
+
+  const extractIntroText = (html: string): string => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const intro = doc.querySelector(".intro");
+    if (!intro) return "";
+    return intro.textContent?.trim() || "";
+  };
+
+  const handleExcelExport = async () => {
+    setExporting(true);
+    try {
+      const exportArticles = filteredArticles.filter(
+        (a) => !isLexikonArticle(a.category)
+      );
+
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet("Content Übersicht");
+
+      sheet.columns = [
+        { header: "Titel", key: "title", width: 45 },
+        { header: "Kategorie", key: "category", width: 25 },
+        { header: "Meta-Title", key: "metaTitle", width: 50 },
+        { header: "Meta-Description", key: "metaDescription", width: 65 },
+        { header: "Intro", key: "intro", width: 80 },
+      ];
+
+      const headerRow = sheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      headerRow.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF2563EB" },
+      };
+      headerRow.alignment = { vertical: "middle" };
+
+      for (const article of exportArticles) {
+        const row = sheet.addRow({
+          title: article.title,
+          category: article.category,
+          metaTitle: article.metaTitle || "",
+          metaDescription: article.metaDescription || "",
+          intro: extractIntroText(article.htmlContent),
+        });
+        row.alignment = { vertical: "top", wrapText: true };
+      }
+
+      sheet.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: 5 },
+      };
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const today = new Date().toISOString().split("T")[0];
+      a.download = `Content-Check_${filterCategory !== "all" ? filterCategory + "_" : ""}${today}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Excel export failed:", err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (selectedArticle) {
     return (
@@ -227,6 +333,10 @@ export default function ContentCheckPage() {
       />
     );
   }
+
+  const exportableCount = filteredArticles.filter(
+    (a) => !isLexikonArticle(a.category)
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -275,6 +385,19 @@ export default function ContentCheckPage() {
         {/* Kommentar-Filter */}
         <div className="h-5 w-px bg-slate-300 dark:bg-slate-600 hidden sm:block" />
         <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+        >
+          <option value="all">Alle Kategorien ({articles.length})</option>
+          {RATGEBER_CATEGORIES.map((cat) => {
+            const count = categoryCount(cat);
+            return (
+              <option key={cat} value={cat}>{cat} ({count})</option>
+            );
+          })}
+        </select>
+        <select
           value={commentFilter}
           onChange={(e) => setCommentFilter(e.target.value)}
           className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
@@ -284,6 +407,24 @@ export default function ContentCheckPage() {
           <option value="open">Offene Kommentare</option>
           <option value="resolved">Nur erledigte Kommentare</option>
         </select>
+        <div className="h-5 w-px bg-slate-300 dark:bg-slate-600 hidden sm:block" />
+        <button
+          onClick={handleExcelExport}
+          disabled={exporting || exportableCount === 0}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+        >
+          {exporting ? (
+            <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          ) : (
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          )}
+          Bilddaten Export ({exportableCount})
+        </button>
       </div>
 
       {/* Artikel-Liste */}
@@ -298,9 +439,9 @@ export default function ContentCheckPage() {
           </div>
         ) : filteredArticles.length === 0 ? (
           <div className="p-12 text-center text-slate-500 dark:text-slate-400">
-            {filterStatus === "all"
+            {filterStatus === "all" && filterCategory === "all" && commentFilter === "all"
               ? "Noch keine generierten Artikel vorhanden."
-              : `Keine Artikel mit Status "${STATUS_CONFIG[filterStatus]?.label}".`}
+              : `Keine Artikel für die gewählten Filter gefunden.`}
           </div>
         ) : (
           <div className="divide-y divide-slate-200 dark:divide-slate-700">
