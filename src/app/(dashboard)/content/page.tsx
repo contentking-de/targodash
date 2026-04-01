@@ -111,6 +111,7 @@ function ContentPageInner() {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [editorialPlanEntryId] = useState(searchParams.get("editorialPlanEntryId") || "");
   const [fromRedaktionsplan] = useState(!!searchParams.get("editorialPlanEntryId"));
+  const [editorialDescription] = useState(searchParams.get("description") || "");
 
   const categories = contentType === "ratgeber" ? RATGEBER_CATEGORIES : LEXIKON_CATEGORIES;
 
@@ -170,7 +171,7 @@ function ContentPageInner() {
       const res = await fetch("/api/generate-article", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, funnelStage, category, targetAudience: targetAudiences.join(", "), contentType }),
+        body: JSON.stringify({ title, funnelStage, category, targetAudience: targetAudiences.join(", "), contentType, ...(editorialDescription ? { description: editorialDescription } : {}) }),
         signal: abortControllerRef.current.signal,
       });
 

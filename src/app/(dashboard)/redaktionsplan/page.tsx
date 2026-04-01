@@ -502,6 +502,7 @@ export default function RedaktionsplanPage() {
           category: entry.ratgeberCategory || "",
           contentType,
           editorialPlanEntryId: entry.id,
+          ...(entry.description ? { description: entry.description } : {}),
         });
         router.push(`/content?${params.toString()}`);
       }

@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { title, funnelStage, category, targetAudience, contentType } = body;
+  const { title, funnelStage, category, targetAudience, contentType, description } = body;
 
   if (!title || !funnelStage || !category || !targetAudience) {
     return new Response(
@@ -211,6 +211,8 @@ export async function POST(request: NextRequest) {
   const isLexikon = contentType === "lexikon";
   const systemPrompt = isLexikon ? LEXIKON_SYSTEM_PROMPT : RATGEBER_SYSTEM_PROMPT;
 
+  const descriptionHint = description ? `\nInhaltliche Beschreibung / Briefing: ${description}\n` : "";
+
   const userMessage = isLexikon
     ? `Schreibe einen ausführlichen Lexikon-Artikel (Glossar-Eintrag) mit folgenden Parametern:
 
@@ -218,7 +220,7 @@ Begriff / Titel: ${title}
 Funnel-Stage: ${funnelStage}
 Lexikon-Kategorie: ${category}
 Zielgruppe: ${targetAudience}
-
+${descriptionHint}
 Achte besonders auf eine natürliche, fließende Satzlänge mit durchschnittlich 20 Wörtern pro Satz. Vermeide zu kurze, abgehackte Sätze.
 
 Gib ausschließlich das vollständige HTML-Dokument aus. Kein Text davor oder danach.`
@@ -228,7 +230,7 @@ Titel: ${title}
 Funnel-Stage: ${funnelStage}
 Ratgeber-Kategorie: ${category}
 Zielgruppe: ${targetAudience}
-
+${descriptionHint}
 Achte besonders auf eine natürliche, fließende Satzlänge mit durchschnittlich 20 Wörtern pro Satz. Vermeide zu kurze, abgehackte Sätze.
 
 Gib ausschließlich das vollständige HTML-Dokument aus. Kein Text davor oder danach.`;
