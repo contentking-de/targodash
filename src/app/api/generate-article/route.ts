@@ -2,6 +2,50 @@ import { auth } from "@/lib/auth";
 import { NextRequest } from "next/server";
 import { isAgentur } from "@/lib/rbac";
 
+function getKommunikativeKlammer(category: string, targetAudience: string): string {
+  const audienceLower = targetAudience.toLowerCase();
+  const categoryLower = category.toLowerCase();
+
+  if (categoryLower.includes("anschlussfinanzierung") || audienceLower.includes("anschlussfinanzierer")) {
+    return `Kommunikative Klammer (bitte als Leitlinie für Tonfall, Kernbotschaft und Vorteile-Argumente nutzen):
+Leitgedanke: BRINGEN WIR ES GEMEINSAM INS ZIEL
+Kerntext-Orientierung: Wenn die Zinsbindung für Ihre Immobilie ausläuft, kümmern wir uns gerne um die Anschlussfinanzierung – unkompliziert und zu attraktiven Konditionen. Das Baufinanzierungs-Team der TARGOBANK sorgt dafür, dass der Übergang reibungslos gelingt. Wir prüfen Ihre Ausgangssituation, beraten Sie zu aktuellen Zinsen und finden eine Finanzierungslösung, die genau zu Ihren Bedürfnissen passt – fair und ohne versteckte Kosten. Wir kümmern uns um alle Formalitäten und sorgen dafür, dass Sie ohne viel Aufwand nahtlos weiterfinanzieren können. So haben Sie Planungssicherheit und können sich beruhigt zurücklehnen.
+Vorteile-Argumente: Reibungsloser, unbürokratischer Antragsprozess | Planungssicherheit dank bis zu 20 Jahren Zinsbindung | Unsere Finanzierungsexperten sind jederzeit für Sie da`;
+  }
+
+  if (
+    categoryLower.includes("kapitalanlage") ||
+    audienceLower.includes("investor") ||
+    audienceLower.includes("kapitalanleger") ||
+    audienceLower.includes("vermieter")
+  ) {
+    return `Kommunikative Klammer (bitte als Leitlinie für Tonfall, Kernbotschaft und Vorteile-Argumente nutzen):
+Leitgedanke: GUT AUFGESTELLT BEI ANLAGEOBJEKTEN
+Kerntext-Orientierung: Eine Immobilie ist mehr als ein Sachwert – sie ist eine langfristige Investition in Ihre finanzielle Freiheit, die gut durchdacht sein will. Die TARGOBANK Baufinanzierungs-Spezialisten unterstützen Sie persönlich dabei, Ihr Vorhaben erfolgreich zu realisieren. Dabei beraten wir Sie transparent, kompetent und auf Augenhöhe – vom ersten Gespräch bis zur Vertragsunterschrift. Mit attraktiven Konditionen, klaren Prozessen und einer unbürokratischen Bearbeitung sorgen wir dafür, dass Ihre Finanzierung reibungslos verläuft. So ist Ihre Immobilieninvestition dank guter Planung von Anfang an solide aufgestellt.
+Vorteile-Argumente: Flexible Kombination aus Rate und Laufzeit – Cashflow und Steuervorteile optimieren | Persönliche Begleitung durch unsere Finanzierungsexperten | Schnelle, verlässliche und unbürokratische Bearbeitung`;
+  }
+
+  if (
+    categoryLower.includes("erstfinanzierung") ||
+    audienceLower.includes("erstkäufer") ||
+    audienceLower.includes("familie") ||
+    audienceLower.includes("single") ||
+    audienceLower.includes("bauherr") ||
+    audienceLower.includes("immobilienkäufer") ||
+    audienceLower.includes("beamte")
+  ) {
+    return `Kommunikative Klammer (bitte als Leitlinie für Tonfall, Kernbotschaft und Vorteile-Argumente nutzen):
+Leitgedanke: VERWIRKLICHEN SIE IHREN TRAUM VOM EIGENHEIM
+Kerntext-Orientierung: Ein eigenes Zuhause zu schaffen, ist ein ganz besonderer Schritt im Leben – wir begleiten Sie gerne dabei. Ob Stadt oder Land, Kauf oder Neubau: Wir kennen uns aus, verstehen Ihre Pläne und finden gemeinsam mit Ihnen genau die Finanzierungslösung, die zu Ihrem Leben passt. Bei Ihrer Finanzierung können Sie Laufzeit, Tilgung und Zinsbindung individuell festlegen. Unsere Baufinanzierungsexperten begleiten Sie durch den ganzen Antragsprozess und beraten Sie engagiert und auf Augenhöhe. Damit Sie sich auf Ihr neues Zuhause freuen können.
+Vorteile-Argumente: Attraktive Zinsen und Planungssicherheit durch bis zu 20 Jahren Zinsbindung | Flexible Sondertilgungsmöglichkeiten | Persönliche Begleitung durch unsere Finanzierungsexperten`;
+  }
+
+  return `Kommunikative Klammer (bitte als Leitlinie für Tonfall, Kernbotschaft und Vorteile-Argumente nutzen):
+Leitgedanke: GEMEINSAM ZUKUNFT BAUEN – MIT EINER INDIVIDUELLEN BAUFINANZIERUNG
+Kerntext-Orientierung: Der Besitz einer eigenen Immobilie ist für viele reizvoll – und zugleich ein komplexes Thema. Das Baufinanzierungs-Team der TARGOBANK unterstützt Sie daher mit Rat und Tat dabei, Ihr Immobilienvorhaben Wirklichkeit werden zu lassen. Ob Kauf oder Neubau, Eigennutzung oder Kapitalanlage – wir packen mit an und begleiten Sie persönlich durch den gesamten Antragsprozess. Ihre Finanzierung ist mit günstigen Zinsen, flexiblen Laufzeiten und individuellen Sondertilgungsmöglichkeiten ideal auf Ihre Vorstellungen abgestimmt. So meistern wir gemeinsam den Weg zu Ihrer Wunschimmobilie.
+Vorteile-Argumente: Individuelle Finanzierungsmodelle | Planungssicherheit dank bis zu 20 Jahren Zinsbindung | Flexible Sondertilgungsmöglichkeiten | Persönliche Begleitung durch unsere Finanzierungsexperten | Schnelle, transparente und unbürokratische Bearbeitung`;
+}
+
 const RATGEBER_SYSTEM_PROMPT = `Du bist ein professioneller Content-Autor für die TARGOBANK und schreibst ausschließlich im offiziellen TARGOBANK Markenstil. Du erstellst lange, SEO-optimierte Ratgeber-Artikel zum Thema Baufinanzierung als vollständige HTML-Dokumente.
 
 ## TARGOBANK SPRACHREGELN (verbindlich für jeden Satz)
@@ -78,7 +122,28 @@ Decision: Handlungsimpulse, letzte Unsicherheiten nehmen, klare nächste Schritt
 
 Wenn du Tabellen, Rechenbeispiele oder Beispielrechnungen mit konkreten Preisen, Beträgen oder Zinssätzen einfügst, ergänze IMMER direkt unterhalb der Tabelle oder des Rechenbeispiels folgenden Hinweissatz als <p> mit class="example-disclaimer" in kursiver Schrift:
 
-"Hinweis: Es handelt sich hier um eine exemplarische und fiktive Beispielrechnung mit angenommenen Werten und Zinsdaten. Preise und Zinssätze können je nach Marktsituation variieren."`;
+"Hinweis: Es handelt sich hier um eine exemplarische und fiktive Beispielrechnung mit angenommenen Werten und Zinsdaten. Preise und Zinssätze können je nach Marktsituation variieren."
+
+## DO'S AND DON'TS – BENENNUNG DES TEAMS (strikt einhalten)
+
+Richtig (immer verwenden):
+- TARGOBANK Baufinanzierungs-Team
+- TARGOBANK Baufinanzierungs-Experten
+- Unser Baufinanzierungs-Team
+- Unsere Baufinanzierungs-Experten
+
+Falsch (NIEMALS verwenden):
+- "TARGOBANK Baufinanzierung" – suggeriert, die TARGOBANK biete selbst Baufinanzierungen an
+- "Unsere Baufinanzierung" – ebenso falsch
+- "Die Baufinanzierung der TARGOBANK" – ebenso falsch
+
+Die TARGOBANK vermittelt die Baufinanzierung über ihren Partner OLB. Deshalb immer das Team oder die Experten benennen, nie "die Baufinanzierung" als eigenes Produkt darstellen.
+
+## LEGAL DISCLAIMER (Pflichtbestandteil)
+
+Am Ende jedes Artikels (vor dem FAQ oder im Fazit) MUSS folgender Hinweis als <p> mit class="legal-disclaimer" in kleiner Schrift (font-size: 0.85em, color: #666) eingefügt werden:
+
+"Bei unserem exklusiven Baufinanzierungspartner, der Oldenburgischen Landesbank (OLB), haben wir Zugang zu attraktiven Konditionen, die wir Ihnen gerne vermitteln. Im Falle eines Abschlusses ist daher die OLB Ihr Vertragspartner. Den genauen Leistungsumfang entnehmen Sie bitte den Finanzierungsbedingungen der OLB."`;
 
 const LEXIKON_SYSTEM_PROMPT = `Du bist ein professioneller Content-Autor für die TARGOBANK und schreibst ausschließlich im offiziellen TARGOBANK Markenstil. Du erstellst SEO-optimierte Lexikon-Artikel (Glossar-Einträge) zum Thema Baufinanzierung und Immobilien als vollständige HTML-Dokumente.
 
@@ -173,7 +238,28 @@ Decision: Handlungsimpulse, letzte Unsicherheiten nehmen, klare nächste Schritt
 
 Wenn du Tabellen, Rechenbeispiele oder Beispielrechnungen mit konkreten Preisen, Beträgen oder Zinssätzen einfügst, ergänze IMMER direkt unterhalb der Tabelle oder des Rechenbeispiels folgenden Hinweissatz als <p> mit class="example-disclaimer" in kursiver Schrift:
 
-"Hinweis: Es handelt sich hier um eine exemplarische und fiktive Beispielrechnung mit angenommenen Werten und Zinsdaten. Preise und Zinssätze können je nach Marktsituation variieren."`;
+"Hinweis: Es handelt sich hier um eine exemplarische und fiktive Beispielrechnung mit angenommenen Werten und Zinsdaten. Preise und Zinssätze können je nach Marktsituation variieren."
+
+## DO'S AND DON'TS – BENENNUNG DES TEAMS (strikt einhalten)
+
+Richtig (immer verwenden):
+- TARGOBANK Baufinanzierungs-Team
+- TARGOBANK Baufinanzierungs-Experten
+- Unser Baufinanzierungs-Team
+- Unsere Baufinanzierungs-Experten
+
+Falsch (NIEMALS verwenden):
+- "TARGOBANK Baufinanzierung" – suggeriert, die TARGOBANK biete selbst Baufinanzierungen an
+- "Unsere Baufinanzierung" – ebenso falsch
+- "Die Baufinanzierung der TARGOBANK" – ebenso falsch
+
+Die TARGOBANK vermittelt die Baufinanzierung über ihren Partner OLB. Deshalb immer das Team oder die Experten benennen, nie "die Baufinanzierung" als eigenes Produkt darstellen.
+
+## LEGAL DISCLAIMER (Pflichtbestandteil)
+
+Am Ende jedes Artikels (vor dem FAQ oder im Fazit) MUSS folgender Hinweis als <p> mit class="legal-disclaimer" in kleiner Schrift (font-size: 0.85em, color: #666) eingefügt werden:
+
+"Bei unserem exklusiven Baufinanzierungspartner, der Oldenburgischen Landesbank (OLB), haben wir Zugang zu attraktiven Konditionen, die wir Ihnen gerne vermitteln. Im Falle eines Abschlusses ist daher die OLB Ihr Vertragspartner. Den genauen Leistungsumfang entnehmen Sie bitte den Finanzierungsbedingungen der OLB."`;
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -211,6 +297,8 @@ export async function POST(request: NextRequest) {
   const isLexikon = contentType === "lexikon";
   const systemPrompt = isLexikon ? LEXIKON_SYSTEM_PROMPT : RATGEBER_SYSTEM_PROMPT;
 
+  const kommunikativeKlammer = getKommunikativeKlammer(category, targetAudience);
+
   const descriptionHint = description ? `\nInhaltliche Beschreibung / Briefing: ${description}\n` : "";
 
   const userMessage = isLexikon
@@ -221,6 +309,7 @@ Funnel-Stage: ${funnelStage}
 Lexikon-Kategorie: ${category}
 Zielgruppe: ${targetAudience}
 ${descriptionHint}
+${kommunikativeKlammer}
 Achte besonders auf eine natürliche, fließende Satzlänge mit durchschnittlich 20 Wörtern pro Satz. Vermeide zu kurze, abgehackte Sätze.
 
 Gib ausschließlich das vollständige HTML-Dokument aus. Kein Text davor oder danach.`
@@ -231,6 +320,7 @@ Funnel-Stage: ${funnelStage}
 Ratgeber-Kategorie: ${category}
 Zielgruppe: ${targetAudience}
 ${descriptionHint}
+${kommunikativeKlammer}
 Achte besonders auf eine natürliche, fließende Satzlänge mit durchschnittlich 20 Wörtern pro Satz. Vermeide zu kurze, abgehackte Sätze.
 
 Gib ausschließlich das vollständige HTML-Dokument aus. Kein Text davor oder danach.`;

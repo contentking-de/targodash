@@ -181,16 +181,13 @@ export default function ContentCheckPage() {
     loadArticles();
   }, [loadArticles]);
 
-  const deepLinkHandled = useRef(false);
   useEffect(() => {
-    if (deepLinkHandled.current) return;
     const articleId = searchParams.get("article");
-    if (articleId && !selectedArticle) {
-      deepLinkHandled.current = true;
+    if (articleId) {
       openArticle(articleId);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, selectedArticle]);
+  }, []);
 
   const handleDeleteArticle = async (id: string) => {
     if (!confirm("Artikel wirklich löschen? Alle Kommentare und die gesamte Status-Historie werden ebenfalls gelöscht.")) return;
