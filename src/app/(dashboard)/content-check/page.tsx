@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
 import ExcelJS from "exceljs";
+import { formatReviewDueDateDe, isReviewStepPastDue } from "@/lib/review-deadline";
 
 // --- Types ---
 
@@ -65,6 +66,7 @@ interface Article {
   claimedAt: string | null;
   claimedByUserId: string | null;
   claimedByName: string | null;
+  reviewStepDueAt: string | null;
   creator: { id: string; name: string | null; email: string };
   comments: ArticleComment[];
   images?: ArticleImage[];
@@ -497,6 +499,22 @@ export default function ContentCheckPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             {article.claimedByName}
+                          </span>
+                        )}
+                        {article.reviewStepDueAt && article.reviewStatus !== "published" && (
+                          <span
+                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                              isReviewStepPastDue(new Date(article.reviewStepDueAt))
+                                ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                                : "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300"
+                            }`}
+                            title="Frist für den aktuellen Workflow-Schritt (2 Werktage ab Weitergeben)"
+                          >
+                            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Frist {formatReviewDueDateDe(article.reviewStepDueAt)}
+                            {isReviewStepPastDue(new Date(article.reviewStepDueAt)) && " · überfällig"}
                           </span>
                         )}
                       </div>
@@ -1519,10 +1537,25 @@ function ArticleReviewView({
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex-wrap">
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusConfig.bg} ${statusConfig.color}`}>
             {statusConfig.label}
           </span>
+          {article.reviewStepDueAt && article.reviewStatus !== "published" && (
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                isReviewStepPastDue(new Date(article.reviewStepDueAt))
+                  ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 ring-1 ring-red-200 dark:ring-red-800"
+                  : "bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200"
+              }`}
+            >
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Frist aktueller Schritt: {formatReviewDueDateDe(article.reviewStepDueAt)}
+              {isReviewStepPastDue(new Date(article.reviewStepDueAt)) ? " (überfällig)" : ""}
+            </span>
+          )}
           {/* Claim */}
           {article.reviewStatus !== "draft" && article.reviewStatus !== "published" && (
             isClaimedByOther ? (

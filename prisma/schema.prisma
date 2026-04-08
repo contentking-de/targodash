@@ -628,6 +628,7 @@ model GeneratedArticle {
   eloxxImportedBy      String?     // E-Mail/Name des Users, der den Import markiert hat
   revisionRequestedAt  DateTime?   // Zeitpunkt, wann eine Überarbeitung angefordert wurde
   revisionRequestedBy  String?     // Name des Users, der die Überarbeitung angefordert hat
+  reviewStepDueAt      DateTime?   // Fertigstellung für aktuellen Schritt (2 Werktage ab letztem Weitergeben, Europe/Berlin)
   claimedAt            DateTime?   // Zeitpunkt, wann ein User den Artikel beansprucht hat
   claimedByUserId      String?     // UserId des Users, der den Artikel bearbeitet
   claimedByName        String?     // Anzeigename des Users, der den Artikel bearbeitet

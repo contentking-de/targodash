@@ -5,6 +5,7 @@ import { sendContentReviewNotification, sendRecheckReadyNotification } from "@/l
 import { isAgentur, canEditContentRole } from "@/lib/rbac";
 import { createNotificationsForUsers } from "@/lib/notifications";
 import { del } from "@vercel/blob";
+import { computeReviewStepDueAt } from "@/lib/review-deadline";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   draft: ["pm_review"],
@@ -327,6 +328,12 @@ export async function PATCH(
   }
   if (reviewStatus === "legal_approved") {
     updateData.legalApprovedAt = new Date();
+  }
+
+  if (reviewStatus === "published") {
+    updateData.reviewStepDueAt = null;
+  } else {
+    updateData.reviewStepDueAt = computeReviewStepDueAt(new Date());
   }
 
   await prisma.generatedArticle.update({
