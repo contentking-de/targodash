@@ -20,13 +20,13 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   published: [],
 };
 
-// Welche Rolle bei welchem neuen Status benachrichtigt wird
-const STATUS_NOTIFY_ROLE: Record<string, string> = {
-  pm_review: "produktmanagement",
-  brand_review: "brand",
-  compliance_review: "compliance",
-  legal_review: "legal",
-  production_ready: "dev",
+// Welche Rollen bei welchem neuen Status per Mail / In-App benachrichtigt werden
+const STATUS_NOTIFY_ROLES: Record<string, string[]> = {
+  pm_review: ["produktmanagement"],
+  brand_review: ["brand"],
+  compliance_review: ["compliance"],
+  legal_review: ["legal"],
+  production_ready: ["dev", "member", "superadmin"],
 };
 
 // Welche Rolle für den aktuellen Review-Step zuständig ist (inkl. _approved Zustände)
@@ -373,11 +373,11 @@ export async function PATCH(
     },
   });
 
-  const notifyRole = STATUS_NOTIFY_ROLE[reviewStatus];
-  if (notifyRole) {
+  const notifyRoles = STATUS_NOTIFY_ROLES[reviewStatus];
+  if (notifyRoles?.length) {
     try {
       const recipients = await prisma.user.findMany({
-        where: { role: notifyRole },
+        where: { role: { in: notifyRoles } },
         select: { email: true },
       });
 
@@ -397,7 +397,7 @@ export async function PATCH(
       );
 
       const recipientsFull = await prisma.user.findMany({
-        where: { role: notifyRole },
+        where: { role: { in: notifyRoles } },
         select: { id: true },
       });
       await createNotificationsForUsers({
