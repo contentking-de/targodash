@@ -149,6 +149,14 @@ export async function PATCH(
       where: { articleId: id, recheckAfterRevision: true },
     });
 
+    const resolvedByUser = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { name: true, email: true },
+    });
+    const resolvedByName = resolvedByUser?.name || resolvedByUser?.email || "Unbekannt";
+
+    const revisionRequester = article.revisionRequestedBy || "Unbekannt";
+
     const updated = await prisma.generatedArticle.update({
       where: { id },
       data: {
@@ -169,13 +177,31 @@ export async function PATCH(
       },
     });
 
-    if (recheckComments.length > 0) {
-      const resolvedByUser = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        select: { name: true, email: true },
-      });
-      const resolvedByName = resolvedByUser?.name || resolvedByUser?.email || "Unbekannt";
+    await prisma.articleStatusHistory.create({
+      data: {
+        articleId: id,
+        fromStatus: article.reviewStatus,
+        toStatus: article.reviewStatus,
+        changedByEmail: session.user.email,
+        changedByName: resolvedByName,
+        comment: "revision_resolved",
+      },
+    });
 
+    if (recheckComments.length === 0) {
+      await prisma.articleStatusHistory.create({
+        data: {
+          articleId: id,
+          fromStatus: article.reviewStatus,
+          toStatus: article.reviewStatus,
+          changedByEmail: "system",
+          changedByName: revisionRequester,
+          comment: "implicit_approval",
+        },
+      });
+    }
+
+    if (recheckComments.length > 0) {
       const responsibleRole = STATUS_RESPONSIBLE_ROLE[article.reviewStatus];
       const notifyUsers = responsibleRole
         ? await prisma.user.findMany({
@@ -214,7 +240,23 @@ export async function PATCH(
       });
     }
 
-    return NextResponse.json(updated);
+    const refreshed = await prisma.generatedArticle.findUnique({
+      where: { id },
+      include: {
+        creator: { select: { id: true, name: true, email: true } },
+        comments: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            author: { select: { id: true, name: true, email: true } },
+          },
+        },
+        statusHistory: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    return NextResponse.json(refreshed);
   }
 
   // Content-Update durch Agentur- oder ProduktManagement-User (ohne Statuswechsel)

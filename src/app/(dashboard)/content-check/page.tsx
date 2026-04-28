@@ -1226,7 +1226,6 @@ function ArticleReviewView({
       doc.setTextColor(100, 116, 139);
       doc.text("Keine Statusaenderungen protokolliert.", margin, y);
     } else {
-      // Tabellen-Header
       doc.setFillColor(241, 245, 249);
       doc.rect(margin, y - 4, contentWidth, 8, "F");
 
@@ -1234,9 +1233,9 @@ function ArticleReviewView({
       doc.setFont("helvetica", "bold");
       doc.setTextColor(71, 85, 105);
       doc.text("DATUM / UHRZEIT", margin + 2, y);
-      doc.text("VON", margin + 42, y);
-      doc.text("NACH", margin + 82, y);
-      doc.text("GEAENDERT VON", margin + 122, y);
+      doc.text("AKTION", margin + 38, y);
+      doc.text("STATUS", margin + 95, y);
+      doc.text("VON", margin + 135, y);
       y += 7;
 
       doc.setFont("helvetica", "normal");
@@ -1248,17 +1247,45 @@ function ArticleReviewView({
         const entryDate = new Date(entry.createdAt).toLocaleDateString("de-DE", {
           day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
         });
-        const fromLabel = STATUS_LABELS[entry.fromStatus] || entry.fromStatus;
-        const toLabel = STATUS_LABELS[entry.toStatus] || entry.toStatus;
         const changedBy = entry.changedByName || entry.changedByEmail;
+        const statusLabel = STATUS_LABELS[entry.toStatus] || entry.toStatus;
+
+        let actionLabel: string;
+        let statusCol: string;
+
+        switch (entry.comment) {
+          case "revision_requested":
+            actionLabel = "Ueberarb. angefordert";
+            statusCol = STATUS_LABELS[entry.fromStatus] || entry.fromStatus;
+            break;
+          case "revision_resolved":
+            actionLabel = "Ueberarbeitet";
+            statusCol = STATUS_LABELS[entry.fromStatus] || entry.fromStatus;
+            break;
+          case "implicit_approval":
+            actionLabel = "Freigegeben (o. Recheck)";
+            statusCol = STATUS_LABELS[entry.fromStatus] || entry.fromStatus;
+            break;
+          default:
+            if (entry.toStatus.endsWith("_approved")) {
+              actionLabel = "Freigegeben";
+            } else {
+              actionLabel = "Weitergereicht";
+            }
+            statusCol = `${STATUS_LABELS[entry.fromStatus] || entry.fromStatus} -> ${statusLabel}`;
+            break;
+        }
 
         doc.setFontSize(7.5);
         doc.text(entryDate, margin + 2, y);
-        doc.text(fromLabel, margin + 42, y);
-        doc.text(toLabel, margin + 82, y);
 
-        const nameLines = doc.splitTextToSize(changedBy, 42);
-        doc.text(nameLines[0], margin + 122, y);
+        doc.text(actionLabel, margin + 38, y);
+
+        const statusLines = doc.splitTextToSize(statusCol, 38);
+        doc.text(statusLines[0], margin + 95, y);
+
+        const nameLines = doc.splitTextToSize(changedBy, 32);
+        doc.text(nameLines[0], margin + 135, y);
 
         y += 6;
 

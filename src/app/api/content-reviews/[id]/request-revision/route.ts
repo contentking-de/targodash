@@ -62,6 +62,17 @@ export async function POST(
     },
   });
 
+  await prisma.articleStatusHistory.create({
+    data: {
+      articleId: id,
+      fromStatus: article.reviewStatus,
+      toStatus: article.reviewStatus,
+      changedByEmail: session.user.email,
+      changedByName: requestedByName,
+      comment: "revision_requested",
+    },
+  });
+
   const recipients = await prisma.user.findMany({
     where: { role: "agentur" },
     select: { email: true },
