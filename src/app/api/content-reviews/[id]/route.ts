@@ -92,7 +92,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
-  const { reviewStatus, htmlContent, metaTitle, metaDescription, eloxxImported, resolveRevision, claim } = body;
+  const { reviewStatus, htmlContent, metaTitle, metaDescription, eloxxImported, resolveRevision, claim, resetToStatus } = body;
 
   const article = await prisma.generatedArticle.findUnique({ where: { id } });
   if (!article) {
@@ -335,6 +335,126 @@ export async function PATCH(
     });
 
     return NextResponse.json(updated);
+  }
+
+  // Status-Rücksetzung (zurück an einen früheren Schritt)
+  if (resetToStatus && !reviewStatus) {
+    const STATUS_ORDER = [
+      "draft", "pm_review", "brand_review", "brand_approved",
+      "compliance_review", "compliance_approved", "legal_review",
+      "legal_approved", "production_ready", "published",
+    ];
+
+    const currentIndex = STATUS_ORDER.indexOf(article.reviewStatus);
+    const targetIndex = STATUS_ORDER.indexOf(resetToStatus);
+
+    if (targetIndex < 0 || targetIndex >= currentIndex) {
+      return NextResponse.json(
+        { error: `Ungültige Rücksetzung: "${resetToStatus}" ist kein früherer Status als "${article.reviewStatus}"` },
+        { status: 400 }
+      );
+    }
+
+    const resetData: Record<string, unknown> = {
+      reviewStatus: resetToStatus,
+      claimedAt: null,
+      claimedByUserId: null,
+      claimedByName: null,
+      revisionRequestedAt: null,
+      revisionRequestedBy: null,
+      eloxxImportedAt: null,
+      eloxxImportedBy: null,
+      reviewStepDueAt: computeReviewStepDueAt(new Date()),
+    };
+
+    if (targetIndex < STATUS_ORDER.indexOf("brand_approved")) {
+      resetData.brandApprovedAt = null;
+    }
+    if (targetIndex < STATUS_ORDER.indexOf("compliance_approved")) {
+      resetData.complianceApprovedAt = null;
+    }
+    if (targetIndex < STATUS_ORDER.indexOf("legal_approved")) {
+      resetData.legalApprovedAt = null;
+    }
+
+    await prisma.generatedArticle.update({
+      where: { id },
+      data: resetData,
+    });
+
+    const changedByUser = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { name: true, email: true },
+    });
+    const changedByName = changedByUser?.name || changedByUser?.email || "Unbekannt";
+
+    await prisma.articleStatusHistory.create({
+      data: {
+        articleId: id,
+        fromStatus: article.reviewStatus,
+        toStatus: resetToStatus,
+        changedByEmail: session.user.email,
+        changedByName,
+        comment: "status_reset",
+      },
+    });
+
+    const notifyRoles = STATUS_NOTIFY_ROLES[resetToStatus];
+    if (notifyRoles?.length) {
+      try {
+        const recipients = await prisma.user.findMany({
+          where: { role: { in: notifyRoles } },
+          select: { email: true },
+        });
+
+        const baseUrl = process.env.NEXTAUTH_URL || "https://dashboard.tasketeer.com";
+        const dashboardUrl = `${baseUrl}/content-check?article=${id}`;
+
+        await Promise.allSettled(
+          recipients.map((recipient) =>
+            sendContentReviewNotification({
+              to: recipient.email,
+              articleTitle: article.title,
+              newStatus: resetToStatus,
+              changedByName,
+              dashboardUrl,
+            })
+          )
+        );
+
+        const recipientsFull = await prisma.user.findMany({
+          where: { role: { in: notifyRoles } },
+          select: { id: true },
+        });
+        await createNotificationsForUsers({
+          userIds: recipientsFull.map((u) => u.id),
+          type: "content_review",
+          title: "Content-Review zurückgesetzt",
+          message: `${changedByName} hat "${article.title}" zur erneuten Prüfung zurückgesetzt.`,
+          link: `/content-check?article=${id}`,
+        });
+      } catch (emailError) {
+        console.error("Error sending reset notifications:", emailError);
+      }
+    }
+
+    const withHistory = await prisma.generatedArticle.findUnique({
+      where: { id },
+      include: {
+        creator: { select: { id: true, name: true, email: true } },
+        comments: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            author: { select: { id: true, name: true, email: true } },
+          },
+        },
+        statusHistory: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    return NextResponse.json(withHistory);
   }
 
   // Status-Transition

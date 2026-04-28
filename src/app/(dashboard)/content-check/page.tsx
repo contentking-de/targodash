@@ -578,6 +578,7 @@ function ArticleReviewView({
   const [deleting, setDeleting] = useState(false);
   const [eloxxUpdating, setEloxxUpdating] = useState(false);
   const [requestingRevision, setRequestingRevision] = useState(false);
+  const [showResetDropdown, setShowResetDropdown] = useState(false);
   const [resolvingRevision, setResolvingRevision] = useState(false);
   const [claimUpdating, setClaimUpdating] = useState(false);
   const [articleImages, setArticleImages] = useState<ArticleImage[]>(article.images || []);
@@ -776,6 +777,23 @@ function ArticleReviewView({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reviewStatus: newStatus }),
+      });
+      if (res.ok) onUpdate(await res.json());
+    } catch {
+      // Ignore
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleResetToStatus = async (targetStatus: string) => {
+    setShowResetDropdown(false);
+    setUpdating(true);
+    try {
+      const res = await fetch(`/api/content-reviews/${article.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resetToStatus: targetStatus }),
       });
       if (res.ok) onUpdate(await res.json());
     } catch {
@@ -1266,6 +1284,10 @@ function ArticleReviewView({
             actionLabel = "Freigegeben (o. Recheck)";
             statusCol = STATUS_LABELS[entry.fromStatus] || entry.fromStatus;
             break;
+          case "status_reset":
+            actionLabel = "Zurueckgesetzt";
+            statusCol = `${STATUS_LABELS[entry.fromStatus] || entry.fromStatus} -> ${statusLabel}`;
+            break;
           default:
             if (entry.toStatus.endsWith("_approved")) {
               actionLabel = "Freigegeben";
@@ -1631,6 +1653,36 @@ function ArticleReviewView({
             >
               {updating ? "Bitte warten..." : nextAction.label}
             </button>
+          )}
+          {currentStepIndex > 0 && article.reviewStatus !== "published" && (
+            <div className="relative">
+              <button
+                onClick={() => setShowResetDropdown(!showResetDropdown)}
+                disabled={updating}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+                Zurücksetzen an...
+              </button>
+              {showResetDropdown && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg py-1 min-w-[220px]">
+                  {STATUS_FLOW.slice(0, currentStepIndex).map((status) => {
+                    const config = STATUS_CONFIG[status];
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => handleResetToStatus(status)}
+                        className="w-full px-4 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 transition-colors"
+                      >
+                        ← {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           )}
           {(article.reviewStatus === "production_ready" || article.reviewStatus === "published") && (
             <button
